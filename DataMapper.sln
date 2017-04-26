@@ -10,9 +10,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataMapperPerformanceExec", "DataMapperPerformanceExec\DataMapperPerformanceExec.csproj", "{430A91B2-C0F1-4032-95D1-DECA0CCE3751}"
 EndProject
 Global
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
@@ -33,20 +30,5 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 4
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = http://172.20.10.8:8080/tfs/contrologis
-		SccLocalPath0 = .
-		SccProjectUniqueName1 = DataMapper\\DataMapper.csproj
-		SccProjectName1 = DataMapper
-		SccLocalPath1 = DataMapper
-		SccProjectUniqueName2 = DataMapperPerformanceExec\\DataMapperPerformanceExec.csproj
-		SccProjectName2 = DataMapperPerformanceExec
-		SccLocalPath2 = DataMapperPerformanceExec
-		SccProjectUniqueName3 = DataMapperUnitTest\\DataMapperUnitTest.csproj
-		SccProjectName3 = DataMapperUnitTest
-		SccLocalPath3 = DataMapperUnitTest
 	EndGlobalSection
 EndGlobal
