@@ -1,0 +1,18 @@
+C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapperUnitTest\bin\Debug\DataMapperUnitTest.dll.config
+C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapperUnitTest\bin\Debug\DataMapperUnitTest.dll
+C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapperUnitTest\bin\Debug\DataMapperUnitTest.pdb
+C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapperUnitTest\bin\Debug\DataMapper.dll
+C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapperUnitTest\bin\Debug\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll
+C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapperUnitTest\bin\Debug\DataMapper.pdb
+C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapperUnitTest\obj\Debug\DataMapperUnitTest.csprojResolveAssemblyReference.cache
+C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapperUnitTest\obj\Debug\DataMapperUnitTest.dll
+C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapperUnitTest\obj\Debug\DataMapperUnitTest.pdb
+E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperUnitTest\bin\Debug\DataMapperUnitTest.dll.config
+E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperUnitTest\bin\Debug\DataMapperUnitTest.dll
+E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperUnitTest\bin\Debug\DataMapperUnitTest.pdb
+E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperUnitTest\bin\Debug\DataMapper.dll
+E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperUnitTest\bin\Debug\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll
+E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperUnitTest\bin\Debug\DataMapper.pdb
+E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperUnitTest\obj\Debug\DataMapperUnitTest.csprojResolveAssemblyReference.cache
+E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperUnitTest\obj\Debug\DataMapperUnitTest.dll
+E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperUnitTest\obj\Debug\DataMapperUnitTest.pdb

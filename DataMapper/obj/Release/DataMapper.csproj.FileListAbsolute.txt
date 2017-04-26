@@ -1,0 +1,12 @@
+C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapper\bin\Release\DataMapper.dll
+C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapper\bin\Release\DataMapper.pdb
+C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapper\obj\Release\DataMapper.dll
+C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapper\obj\Release\DataMapper.pdb
+C:\Users\cristiancgomezn\Desktop\DataMapper\DataMapper\bin\Release\DataMapper.dll
+C:\Users\cristiancgomezn\Desktop\DataMapper\DataMapper\bin\Release\DataMapper.pdb
+C:\Users\cristiancgomezn\Desktop\DataMapper\DataMapper\obj\Release\DataMapper.dll
+C:\Users\cristiancgomezn\Desktop\DataMapper\DataMapper\obj\Release\DataMapper.pdb
+E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapper\bin\Release\DataMapper.dll
+E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapper\bin\Release\DataMapper.pdb
+E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapper\obj\Release\DataMapper.dll
+E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapper\obj\Release\DataMapper.pdb

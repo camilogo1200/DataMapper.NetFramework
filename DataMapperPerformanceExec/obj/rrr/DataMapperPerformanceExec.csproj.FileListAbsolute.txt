@@ -1,0 +1,5 @@
+E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperPerformanceExec\bin\rrr\DataMapperPerformanceExec.exe.config
+E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperPerformanceExec\bin\rrr\DataMapperPerformanceExec.exe
+E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperPerformanceExec\bin\rrr\DataMapper.dll
+E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperPerformanceExec\obj\rrr\DataMapperPerformanceExec.csprojResolveAssemblyReference.cache
+E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperPerformanceExec\obj\rrr\DataMapperPerformanceExec.exe

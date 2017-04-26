@@ -1,0 +1,27 @@
+C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapperUnitTest\bin\Release\DataMapperUnitTest.dll.config
+C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapperUnitTest\bin\Release\DataMapperUnitTest.dll
+C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapperUnitTest\bin\Release\DataMapperUnitTest.pdb
+C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapperUnitTest\bin\Release\DataMapper.dll
+C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapperUnitTest\bin\Release\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll
+C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapperUnitTest\bin\Release\DataMapper.pdb
+C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapperUnitTest\obj\Release\DataMapperUnitTest.csprojResolveAssemblyReference.cache
+C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapperUnitTest\obj\Release\DataMapperUnitTest.dll
+C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapperUnitTest\obj\Release\DataMapperUnitTest.pdb
+C:\Users\cristiancgomezn\Desktop\DataMapper\DataMapperUnitTest\bin\Release\DataMapperUnitTest.dll.config
+C:\Users\cristiancgomezn\Desktop\DataMapper\DataMapperUnitTest\bin\Release\DataMapperUnitTest.dll
+C:\Users\cristiancgomezn\Desktop\DataMapper\DataMapperUnitTest\bin\Release\DataMapperUnitTest.pdb
+C:\Users\cristiancgomezn\Desktop\DataMapper\DataMapperUnitTest\bin\Release\DataMapper.dll
+C:\Users\cristiancgomezn\Desktop\DataMapper\DataMapperUnitTest\bin\Release\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll
+C:\Users\cristiancgomezn\Desktop\DataMapper\DataMapperUnitTest\bin\Release\DataMapper.pdb
+C:\Users\cristiancgomezn\Desktop\DataMapper\DataMapperUnitTest\obj\Release\DataMapperUnitTest.csprojResolveAssemblyReference.cache
+C:\Users\cristiancgomezn\Desktop\DataMapper\DataMapperUnitTest\obj\Release\DataMapperUnitTest.dll
+C:\Users\cristiancgomezn\Desktop\DataMapper\DataMapperUnitTest\obj\Release\DataMapperUnitTest.pdb
+E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperUnitTest\bin\Release\DataMapperUnitTest.dll.config
+E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperUnitTest\bin\Release\DataMapperUnitTest.dll
+E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperUnitTest\bin\Release\DataMapperUnitTest.pdb
+E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperUnitTest\bin\Release\DataMapper.dll
+E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperUnitTest\bin\Release\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll
+E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperUnitTest\bin\Release\DataMapper.pdb
+E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperUnitTest\obj\Release\DataMapperUnitTest.csprojResolveAssemblyReference.cache
+E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperUnitTest\obj\Release\DataMapperUnitTest.dll
+E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperUnitTest\obj\Release\DataMapperUnitTest.pdb
