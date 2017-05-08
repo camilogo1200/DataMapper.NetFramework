@@ -2,15 +2,15 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>DataMapper</id>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <title>DataMapper</title>
     <authors>Cristhian Camilo Gómez N. - Yeison Gustavo Albarracin</authors>
     <owners>Interrapidisimo S.A.</owners>
     <licenseUrl>https://opensource.org/licenses/MIT</licenseUrl>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <description>ORM in ADO.Net</description>
-    <releaseNotes>Mapeador relacional hecho con reflection usando ado.net.</releaseNotes>
+    <releaseNotes>Adición de wrappers para SQLCollection en vez de SqlParameter[]</releaseNotes>
     <copyright>Copyright 2017</copyright>
-    <tags>mapper daatabase orm</tags>
+    <tags>mapper database orm</tags>
   </metadata>
 </package>

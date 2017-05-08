@@ -25,3 +25,10 @@ E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperUnitTest\bin\Release\DataMa
 E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperUnitTest\obj\Release\DataMapperUnitTest.csprojResolveAssemblyReference.cache
 E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperUnitTest\obj\Release\DataMapperUnitTest.dll
 E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperUnitTest\obj\Release\DataMapperUnitTest.pdb
+E:\Repositories\data-mapper\DataMapperUnitTest\bin\Release\DataMapperUnitTest.dll.config
+E:\Repositories\data-mapper\DataMapperUnitTest\bin\Release\DataMapperUnitTest.dll
+E:\Repositories\data-mapper\DataMapperUnitTest\bin\Release\DataMapperUnitTest.pdb
+E:\Repositories\data-mapper\DataMapperUnitTest\bin\Release\DataMapper.dll
+E:\Repositories\data-mapper\DataMapperUnitTest\bin\Release\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll
+E:\Repositories\data-mapper\DataMapperUnitTest\obj\Release\DataMapperUnitTest.dll
+E:\Repositories\data-mapper\DataMapperUnitTest\obj\Release\DataMapperUnitTest.pdb

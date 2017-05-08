@@ -37,7 +37,7 @@
     // the value to true to control when a package is published.
     // e.g. To publish package when building nightly build on VSO, add the following to the build definitions process template
     // 2. Build -> 5. Advanced -> MSBuild Arguments -> "/p:PublishNuGetPackage=true"
-    "PublishOnBuild": false,
+    "PublishOnBuild": true,
 
     // The API key for the server.
     // You can override this behavior by parsing in a MSBuild property named PublishApiKey.

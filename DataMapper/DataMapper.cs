@@ -452,7 +452,7 @@ namespace DataMapper
         /// <param name="entity"></param>
         /// <param name="procedureName"></param>
         /// <param name="sqlParam"></param>
-        public void ExecuteCreateSP<TEntityObject>(string procedureName, params SqlParameter[] sqlParam) 
+        public void ExecuteCreateSP<TEntityObject>(string procedureName, params SqlParameter[] sqlParam)
         {
             TEntityObject entity = (TEntityObject)Activator.CreateInstance(typeof(TEntityObject)); ;
             using (SqlConnection connection = new SqlConnection(getConnectionString()))
@@ -783,7 +783,43 @@ namespace DataMapper
 
             return sqlParams;
         }
+
+
+        public ICollection<TEntity> ExecuteSelectSP(string procedureName, SqlParameterCollection sqlParamsCollection)
+        {
+            SqlParameter[] parameters = sqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
+            return ExecuteSelectSP(procedureName, parameters);
+        }
+
+        public void ExecuteCreateSP<TEntityObj>(string procedureName, SqlParameterCollection sqlParamsCollection)
+        {
+            SqlParameter[] parameters = sqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
+            ExecuteCreateSP<TEntityObj>(procedureName, parameters);
+        }
+
+        public int ExecuteNonQuerySP(string procedureName, SqlParameterCollection sqlParamsCollection)
+        {
+            SqlParameter[] parameters = sqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
+            return ExecuteNonQuerySP(procedureName, parameters);
+        }
+        
         #endregion
+
+        #region Utils
+        private static SqlParameter[] sqlParameterCollectionToSqlParameterArray(SqlParameterCollection sqlParamsCollection)
+        {
+            SqlParameter[] parameters = new SqlParameter[sqlParamsCollection.Count];
+
+            for (int i = 0; i < sqlParamsCollection.Count; i++)
+            {
+                SqlParameter p = sqlParamsCollection[i];
+                parameters[i] = p;
+            }
+
+            return parameters;
+        }
+        #endregion
+
         #endregion
 
     }

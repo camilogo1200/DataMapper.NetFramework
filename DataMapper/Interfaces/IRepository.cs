@@ -50,6 +50,7 @@ namespace Servidor.Comun.DataMapper.DataMapper.Interfaces
         /// <param name="sqlParam"></param>
         /// <returns></returns>
         ICollection<TEntity> ExecuteSelectSP(string procedureName, params SqlParameter[] sqlParam);
+        ICollection<TEntity> ExecuteSelectSP(string procedureName, SqlParameterCollection sqlParamsCollection);
 
         /// <summary>
         /// Ejecuta un procedimiento almacenado de crecion de un registro
@@ -58,6 +59,7 @@ namespace Servidor.Comun.DataMapper.DataMapper.Interfaces
         /// <param name="procedureName"></param>
         /// <param name="sqlParam"></param>
         void ExecuteCreateSP<TEntityObj>(string procedureName, params SqlParameter[] sqlParam);
+        void ExecuteCreateSP<TEntityObj>(string procedureName, SqlParameterCollection sqlParamsCollection);
 
         /// <summary>
         /// Ejecuta un procedimiento almacenado de actualizacion o eliminacion
@@ -66,5 +68,6 @@ namespace Servidor.Comun.DataMapper.DataMapper.Interfaces
         /// <param name="sqlParam"></param>
         /// <returns></returns>
         int ExecuteNonQuerySP(string procedureName, params SqlParameter[] sqlParam);
+        int ExecuteNonQuerySP(string procedureName, SqlParameterCollection sqlParamsCollection);
     }
 }

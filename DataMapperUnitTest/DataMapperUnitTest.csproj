@@ -42,6 +42,10 @@
     <OutputPath>bin\rrr\</OutputPath>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="DataMapper, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\DataMapper.1.0.0\lib\net452\DataMapper.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
   </ItemGroup>
   <Choose>
@@ -62,13 +66,8 @@
     <Compile Include="Usuario.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DataMapper\DataMapper.csproj">
-      <Project>{7fcc9f46-2358-4615-815f-281fdc270e92}</Project>
-      <Name>DataMapper</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="App.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

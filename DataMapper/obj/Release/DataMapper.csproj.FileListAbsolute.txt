@@ -10,3 +10,7 @@ E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapper\bin\Release\DataMapper.dll
 E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapper\bin\Release\DataMapper.pdb
 E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapper\obj\Release\DataMapper.dll
 E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapper\obj\Release\DataMapper.pdb
+E:\Repositories\data-mapper\DataMapper\bin\Release\DataMapper.dll
+E:\Repositories\data-mapper\DataMapper\bin\Release\DataMapper.pdb
+E:\Repositories\data-mapper\DataMapper\obj\Release\DataMapper.dll
+E:\Repositories\data-mapper\DataMapper\obj\Release\DataMapper.pdb
