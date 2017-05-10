@@ -58,8 +58,8 @@ namespace Servidor.Comun.DataMapper.DataMapper.Interfaces
         /// <param name="entity"></param>
         /// <param name="procedureName"></param>
         /// <param name="sqlParam"></param>
-        void ExecuteCreateSP<TEntityObj>(string procedureName, params SqlParameter[] sqlParam);
-        void ExecuteCreateSP<TEntityObj>(string procedureName, SqlParameterCollection sqlParamsCollection);
+        TEntityObj ExecuteCreateSP<TEntityObj>(TEntityObj entity,string procedureName, params SqlParameter[] sqlParam);
+        TEntityObj ExecuteCreateSP<TEntityObj>(TEntityObj entity, string procedureName, SqlParameterCollection sqlParamsCollection);
 
         /// <summary>
         /// Ejecuta un procedimiento almacenado de actualizacion o eliminacion

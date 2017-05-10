@@ -14,3 +14,11 @@ E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperPerformanceExec\bin\Debug\D
 E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperPerformanceExec\obj\Debug\DataMapperPerformanceExec.csprojResolveAssemblyReference.cache
 E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperPerformanceExec\obj\Debug\DataMapperPerformanceExec.exe
 E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperPerformanceExec\obj\Debug\DataMapperPerformanceExec.pdb
+E:\Repositories\data-mapper\DataMapperPerformanceExec\obj\Debug\DataMapperPerformanceExec.csprojResolveAssemblyReference.cache
+E:\Repositories\data-mapper\DataMapperPerformanceExec\bin\Debug\DataMapperPerformanceExec.exe.config
+E:\Repositories\data-mapper\DataMapperPerformanceExec\bin\Debug\DataMapperPerformanceExec.exe
+E:\Repositories\data-mapper\DataMapperPerformanceExec\bin\Debug\DataMapperPerformanceExec.pdb
+E:\Repositories\data-mapper\DataMapperPerformanceExec\bin\Debug\DataMapper.dll
+E:\Repositories\data-mapper\DataMapperPerformanceExec\bin\Debug\DataMapper.pdb
+E:\Repositories\data-mapper\DataMapperPerformanceExec\obj\Debug\DataMapperPerformanceExec.exe
+E:\Repositories\data-mapper\DataMapperPerformanceExec\obj\Debug\DataMapperPerformanceExec.pdb

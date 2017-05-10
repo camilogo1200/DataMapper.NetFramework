@@ -452,9 +452,9 @@ namespace DataMapper
         /// <param name="entity"></param>
         /// <param name="procedureName"></param>
         /// <param name="sqlParam"></param>
-        public void ExecuteCreateSP<TEntityObject>(string procedureName, params SqlParameter[] sqlParam)
+        public TEntityObject ExecuteCreateSP<TEntityObject>(TEntityObject entity,string procedureName, params SqlParameter[] sqlParam)
         {
-            TEntityObject entity = (TEntityObject)Activator.CreateInstance(typeof(TEntityObject)); ;
+            //TEntityObject entity = (TEntityObject)Activator.CreateInstance(typeof(TEntityObject)); ;
             using (SqlConnection connection = new SqlConnection(getConnectionString()))
             {
                 connection.Open();
@@ -466,6 +466,7 @@ namespace DataMapper
                 string Ident = ExecuteProcedure(procedureName, ExecuteType.ExecuteScalar, connection, sqlParam)?.ToString();
                 var result = converter.ConvertFrom(Ident);
                 property.SetValue(entity, result, null);
+                return entity;
             }
         }
 
@@ -785,16 +786,16 @@ namespace DataMapper
         }
 
 
-        public ICollection<TEntity> ExecuteSelectSP(string procedureName, SqlParameterCollection sqlParamsCollection)
+        public ICollection<TEntity> ExecuteSelectSP(string procedureName, SqlParameterCollection sqlParamsCollection = null)
         {
             SqlParameter[] parameters = sqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
             return ExecuteSelectSP(procedureName, parameters);
         }
 
-        public void ExecuteCreateSP<TEntityObj>(string procedureName, SqlParameterCollection sqlParamsCollection)
+        public TEntityObject ExecuteCreateSP<TEntityObject>(TEntityObject entity, string procedureName, SqlParameterCollection sqlParamsCollection)
         {
             SqlParameter[] parameters = sqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
-            ExecuteCreateSP<TEntityObj>(procedureName, parameters);
+            return ExecuteCreateSP<TEntityObject>(entity,procedureName, parameters);
         }
 
         public int ExecuteNonQuerySP(string procedureName, SqlParameterCollection sqlParamsCollection)
