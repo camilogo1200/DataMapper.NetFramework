@@ -2,14 +2,16 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>DataMapper</id>
-    <version>1.2.1</version>
+    <version>2.0.0</version>
     <title>DataMapper</title>
     <authors>Cristhian Camilo Gómez N. - Yeison Gustavo Albarracin</authors>
     <owners>Interrapidisimo S.A.</owners>
     <licenseUrl>https://opensource.org/licenses/MIT</licenseUrl>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <description>ORM in ADO.Net</description>
-    <releaseNotes>Minor Bug Fixes. </releaseNotes>
+    <releaseNotes>Creación de Dictionary para columas calculadas, campos con identity y PK, validación de estas mismas columnas para la inserción en la DB con un 
+    unico SP, mejora de rendimiento general, modificación de métodos para utilizar en multihilos.
+    </releaseNotes>
     <copyright>Copyright 2017</copyright>
     <tags>mapper database orm</tags>
   </metadata>

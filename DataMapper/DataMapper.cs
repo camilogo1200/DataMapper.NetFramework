@@ -11,20 +11,26 @@ using System.Configuration;
 using Servidor.Comun.DataMapper.DataMapper.Interfaces;
 using System.ComponentModel;
 using Servidor.Comun.DataMapper;
+using System.Threading;
 
 namespace DataMapper
 {
+
     /// <summary>
     /// Mapea los datareader a las entidades o inserta en la base de datos.
     /// </summary>
     public sealed class DataMapper<TEntity> : IRepository<TEntity> where TEntity : class
     {
 
-        private static String _primaryKey = null;
+        private static Dictionary<string, bool> _primaryKeys = null;
+        private static Dictionary<string, bool> _calculatedKeys = null;
+        private static Dictionary<string, string> _CustomAttributes = null;
+        String _nombretabla = null;
+
+        private String _identityColumn = null;
         private String _connectionString = null;
         private String _findSQLSentence = null;
         private String _insertStatement = null;
-        private String _identityColumn = null;
         private String _countSentence = null;
 
         /// <summary>
@@ -37,8 +43,6 @@ namespace DataMapper
         private static volatile DataMapper<TEntity> instancia;
 
         private DataMapper() { }
-
-
 
         /// <summary>
         /// Cadena de Conexión a la BD
@@ -54,6 +58,7 @@ namespace DataMapper
                         if (_connectionString == null)
                         {
                             _connectionString = getConnectionString();
+
                         }
                     }
                 }
@@ -67,11 +72,19 @@ namespace DataMapper
             {
                 if (instancia == null)
                 {
+
                     lock (syncRoot)
                     {
                         if (instancia == null)
                         {
+
                             instancia = new DataMapper<TEntity>();
+                            _CustomAttributes = new Dictionary<string, string>();
+                            instancia.CamposEspeciales();
+                            //FIXME 
+                            TEntity entity = (TEntity)Activator.CreateInstance(typeof(TEntity));
+                            instancia.buildInsertStatement(entity);
+
                         }
                     }
                 }
@@ -85,6 +98,65 @@ namespace DataMapper
 
 
         #region ADO insert statements
+
+
+
+        /// <summary>
+        /// Metodo que obtiene cuales columnas de una tabla en la DB son calculadas.
+        /// </summary>
+        private void CamposEspeciales()
+        {
+
+            if (_primaryKeys == null || _calculatedKeys == null || _identityColumn == null)
+            {
+                _nombretabla = typeof(TEntity).Name;
+                using (SqlConnection con = new SqlConnection(ConnectionString))
+                {
+                    con.Open();
+                    _primaryKeys = new Dictionary<string, bool>();
+                    _calculatedKeys = new Dictionary<string, bool>();
+                    SqlCommand command = new SqlCommand("dbo.pa_Verificacion_Campos_Especiales", con);
+                    command.CommandType = System.Data.CommandType.StoredProcedure;
+                    command.Parameters.AddWithValue("@Table_Name", _nombretabla);
+                    SqlDataReader propiedadesReader = command.ExecuteReader();
+                    if (propiedadesReader.HasRows)
+                    {
+                        while (propiedadesReader.Read())
+                        {
+                            string key = propiedadesReader["NOMBRE_CAMPO"] == DBNull.Value ? "" : propiedadesReader["NOMBRE_CAMPO"].ToString();
+                            string value = propiedadesReader["PROPIEDAD"] == DBNull.Value ? "" : propiedadesReader["PROPIEDAD"].ToString();
+
+                            switch (value)
+                            {
+                                case "PK":
+                                    if (!_primaryKeys.ContainsKey(key))
+                                    {
+                                        _primaryKeys.Add(key, true);
+                                    }
+                                    break;
+
+                                case "IDENTITY":
+                                    _identityColumn = key;
+                                    break;
+
+                                case "CALCULATE":
+                                    if (!_calculatedKeys.ContainsKey(key))
+                                    {
+                                        _calculatedKeys.Add(key, true);
+                                    }
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                    }
+                    if (_identityColumn == null) { _identityColumn = ""; }
+                    con.Close();
+                }
+
+            }
+        }
+
         /// <summary>
         /// Crea la consulta para realizar la insercion de un registro
         /// </summary>
@@ -92,38 +164,46 @@ namespace DataMapper
         /// <returns></returns>
         private String buildInsertStatement(TEntity entity)
         {
-            if (_insertStatement == null)
+            lock (syncRoot)
             {
-                //Build the SQL Statement     
-                Type type = entity.GetType();
-                String tableName = entity.GetType().Name;
-                _insertStatement = "INSERT INTO " + tableName + " ( ";
-                //retrieve object properties
-                List<PropertyInfo> properties = entity.GetType().GetProperties().ToList();
 
-                for (int i = 0; i < properties.Count; i++)
+                if (_insertStatement == null)
                 {
-                    PropertyInfo property = properties.ElementAt(i);
-                    String prop = customAttributeFromProperty(property);
-                    if (!isIdentity(prop))
+                    //Build the SQL Statement     
+                    Type type = entity.GetType();
+                    String tableName = entity.GetType().Name;
+                    _insertStatement = "INSERT INTO " + tableName + " ( ";
+                    //retrieve object properties
+                    List<PropertyInfo> properties = entity.GetType().GetProperties().ToList();
+
+                    for (int i = 0; i < properties.Count; i++)
                     {
-                        _insertStatement += (i < properties.Count - 1) ? prop + ", " : prop;
+                        PropertyInfo property = properties.ElementAt(i);
+                        String prop = customAttributeFromProperty(property);
+
+                        if (!isIdentity(prop) && !_calculatedKeys.ContainsKey(prop))
+                        {
+                            _insertStatement += (i < properties.Count - 1) ? prop + ", " : prop;
+                        }
                     }
-                }
-                _insertStatement += " )" + " VALUES (";
-                //Avoid security issues using parameters
-                for (int i = 0; i < properties.Count; i++)
-                {
-                    PropertyInfo property = properties.ElementAt(i);
-                    String prop = customAttributeFromProperty(property);
-                    if (!isIdentity(prop))
+                    _insertStatement += " )" + " VALUES (";
+                    //Avoid security issues using parameters
+                    for (int i = 0; i < properties.Count; i++)
                     {
-                        _insertStatement += (i < properties.Count - 1) ? "@" + prop + ", " : "@" + prop;
+                        PropertyInfo property = properties.ElementAt(i);
+                        String prop = customAttributeFromProperty(property);
+                        if (!isIdentity(prop) && !_calculatedKeys.ContainsKey(prop))
+                        {
+                            _insertStatement += (i < properties.Count - 1) ? "@" + prop + ", " : "@" + prop;
+                        }
                     }
+                    _insertStatement += "); SELECT SCOPE_IDENTITY();";
                 }
-                _insertStatement += "); SELECT SCOPE_IDENTITY();";
             }
+
+
             return _insertStatement;
+
         }
 
         /// <summary>
@@ -134,9 +214,12 @@ namespace DataMapper
         /// <returns></returns>
         private SqlCommand getInsertSqlCommand(TEntity entity, SqlConnection connection)
         {
-            if (_insertStatement == null)
+            lock (syncRoot)
             {
-                _insertStatement = buildInsertStatement(entity);
+                if (_insertStatement == null)
+                {
+                    _insertStatement = buildInsertStatement(entity);
+                }
             }
             SqlCommand command = new SqlCommand(_insertStatement, connection);
             Type type = entity.GetType();
@@ -146,15 +229,17 @@ namespace DataMapper
             {
                 PropertyInfo property = properties.ElementAt(i);
                 String prop = customAttributeFromProperty(property);
-                if (!isIdentity(prop))
+                if (String.Compare(_identityColumn, prop, StringComparison.InvariantCultureIgnoreCase) != 0)
                 {
                     Object value = property.GetValue(entity, null) ?? DBNull.Value;
                     SqlParameter parameter = new SqlParameter("@" + prop, value);
                     command.Parameters.Add(parameter);
+
                 }
             }
             //command.CommandType = CommandType.StoredProcedure;
             command.CommandType = CommandType.Text;
+
             return command;
         }
         #endregion
@@ -165,14 +250,19 @@ namespace DataMapper
         /// Obtiene todos los registros de una tabla
         /// </summary>
         /// <returns></returns>
-        public ICollection<TEntity> GetAll()
+        public ICollection<TEntity> GetAll(string campoOrdenar = null)
         {
             ICollection<TEntity> lEntities = null;
             using (SqlConnection con = new SqlConnection(getConnectionString()))
             {
+                String pk = getPrimarykeys();
+                if (String.IsNullOrEmpty(campoOrdenar))
+                {
+                    campoOrdenar = pk;
+                }
                 SqlDataReader reader = null;
                 Type type = this.GetType().GenericTypeArguments[0];
-                String sqlSentece = "SELECT  * FROM " + type.Name;
+                String sqlSentece = "SELECT  * FROM " + type.Name + " ORDER BY " + campoOrdenar;
                 using (SqlCommand command = new SqlCommand(sqlSentece, con))
                 {
                     con.Open();
@@ -199,14 +289,17 @@ namespace DataMapper
                 using (SqlCommand command = getInsertSqlCommand(entity, connection))
                 {
                     connection.Open();
-                    Object IdNumber = command.ExecuteScalar();
+                    object IdNumber = command.ExecuteScalar();
 
                     Type type = entity.GetType();
-                    String pk = getPrimarykeys(entity);
-                    PropertyInfo property = propertyFromCustomAttribute(pk);
-                    TypeConverter converter = TypeDescriptor.GetConverter(property.PropertyType);
-                    var result = converter.ConvertFrom(IdNumber.ToString());
-                    property.SetValue(entity, result, null);
+                    String pk = getPrimarykeys();
+                    if (IdNumber != null && !String.IsNullOrEmpty(IdNumber.ToString()))
+                    {
+                        PropertyInfo property = propertyFromCustomAttribute(pk);
+                        TypeConverter converter = TypeDescriptor.GetConverter(property.PropertyType);
+                        var result = converter.ConvertFrom(IdNumber.ToString());
+                        property.SetValue(entity, result, null);
+                    }
                 }
             }
 
@@ -225,7 +318,7 @@ namespace DataMapper
                 throw new ArgumentNullException(entity.GetType().ToString());
             }
             var properties = typeof(TEntity).GetProperties().ToList();
-            String pkey = getPrimarykeys(entity);
+            String pkey = getPrimarykeys();
 
             if (String.IsNullOrEmpty(pkey))
             {
@@ -259,7 +352,7 @@ namespace DataMapper
         {
             int rowAfected = 0;
             var properties = typeof(TEntity).GetProperties().ToList();
-            String pkey = getPrimarykeys(entity);
+            String pkey = getPrimarykeys();
 
             if (String.IsNullOrEmpty(pkey))
             {
@@ -330,7 +423,7 @@ namespace DataMapper
         /// <param name="attribute">Nombre de la propiedad (Columna) BD</param>
         /// <param name="exacto">indica si el valor a consultar es exacto</param>
         /// <returns>La entidad que contiene el valor indicado, de otra manera null</returns>
-        public ICollection<TEntity> findByAttribute(string value, string attribute, bool exacto = true)
+        public ICollection<TEntity> findByAttribute(string value, string attribute, bool exacto = true, string campoOrdenar = null)
         {
             ICollection<TEntity> lEntities = null;
             using (SqlConnection con = new SqlConnection(ConnectionString))
@@ -338,9 +431,15 @@ namespace DataMapper
                 SqlDataReader reader = null;
                 Type type = this.GetType().GenericTypeArguments[0];
                 PropertyInfo property = type.GetProperty(attribute);
+                if (String.IsNullOrEmpty(campoOrdenar))
+                {
+                    String pkey = getPrimarykeys();
+                    campoOrdenar = pkey;
 
+                }
                 String sqlSentece = buildFindSqlSentence(property, type, value, exacto);
                 using (SqlCommand command = new SqlCommand(sqlSentece, con))
+
                 {
                     Type propertyType = property.PropertyType;
                     if (!exacto && propertyType.Equals(Type.GetType("System.String")))
@@ -351,6 +450,8 @@ namespace DataMapper
                     {
                         command.Parameters.AddWithValue("@Value", value);
                     }
+                    _findSQLSentence += "  ORDER BY "+campoOrdenar;
+                    
                     command.CommandType = CommandType.Text;
                     con.Open();
                     reader = command.ExecuteReader(CommandBehavior.CloseConnection);
@@ -360,7 +461,9 @@ namespace DataMapper
                         lEntities = mapResultsToEntities(ref reader);
                     }
                 }
+                con.Close();
             }
+            
             return lEntities;
         }
 
@@ -397,13 +500,14 @@ namespace DataMapper
         /// <param name="property"></param>
         /// <param name="type"></param>
         /// <returns></returns>
-        private string buildFindSqlSentence(PropertyInfo property, Type type, String value = null, bool exacto = true)
+        private string buildFindSqlSentence(PropertyInfo property, Type type, String value = null, bool exacto = true, string campoOrdenar = null)
         {
 
             if (_findSQLSentence == null)
             {
+                
                 String field = customAttributeFromProperty(property);
-                _findSQLSentence = "SELECT * FROM " + type.Name + " WHERE " + field;
+                _findSQLSentence = "SELECT * FROM " + type.Name + " WHERE " + field ;
                 Type propertyType = property.PropertyType;
                 if (!exacto && propertyType.Equals(Type.GetType("System.String")))
                 {
@@ -424,7 +528,7 @@ namespace DataMapper
         /// <summary>
         /// Ejecuta un procedimiento almacenado de seleccion de registros
         /// </summary>
-        /// <param name="procedureName"></param>
+        /// <param name="procedureName"></param>        
         /// <param name="sqlParam"></param>
         /// <returns></returns>
         public ICollection<TEntity> ExecuteSelectSP(string procedureName, params SqlParameter[] sqlParam)
@@ -452,22 +556,36 @@ namespace DataMapper
         /// <param name="entity"></param>
         /// <param name="procedureName"></param>
         /// <param name="sqlParam"></param>
-        public TEntityObject ExecuteCreateSP<TEntityObject>(TEntityObject entity,string procedureName, params SqlParameter[] sqlParam)
+        public TEntityObject ExecuteCreateSP<TEntityObject>(TEntityObject entity, string procedureName, params SqlParameter[] sqlParam)
         {
-            //TEntityObject entity = (TEntityObject)Activator.CreateInstance(typeof(TEntityObject)); ;
+
+            String pk = getPrimarykeys();
+
             using (SqlConnection connection = new SqlConnection(getConnectionString()))
             {
                 connection.Open();
                 //Set Object Id
                 Type type = entity.GetType();
-                String pk = getPrimarykeys(entity);
+
                 PropertyInfo property = propertyFromCustomAttribute(pk);
                 TypeConverter converter = TypeDescriptor.GetConverter(property.PropertyType);
                 string Ident = ExecuteProcedure(procedureName, ExecuteType.ExecuteScalar, connection, sqlParam)?.ToString();
-                var result = converter.ConvertFrom(Ident);
-                property.SetValue(entity, result, null);
+                if (string.IsNullOrEmpty(Ident))
+                {
+                    var result = converter.ConvertFrom(Ident);
+                    property.SetValue(entity, result, null);
+                }
                 return entity;
             }
+        }
+
+        private string getPrimarykeys()
+        {
+            if (_primaryKeys.Count == 0)
+            {
+                throw new Exception("La Tabla { " + _nombretabla + " } no contiene llaves primarias.");
+            }
+            return _primaryKeys.Keys.ElementAt(0);
         }
 
         /// <summary>
@@ -537,43 +655,30 @@ namespace DataMapper
 
             return returnObject;
         }
+
+        /// <summary>
+        /// Ejecuta un procedimiento que retorna un Boolean
+        /// </summary>
+        /// <param name="procedureName"></param>
+        /// <param name="sqlParam"></param>
+        /// <returns></returns>
+        public object ExecuteBooleanSP(string procedureName, params SqlParameter[] sqlParam)
+        {
+            object returnValue;
+
+            using (SqlConnection connection = new SqlConnection(getConnectionString()))
+            {
+                connection.Open();
+                returnValue = (object)ExecuteProcedure(procedureName, ExecuteType.ExecuteScalar, connection, sqlParam);
+            }
+
+            return returnValue;
+        }
         #endregion
 
 
         #region FuncionesGenerales
 
-        /// <summary>
-        /// Obtiene la llave primaria de una tabla
-        /// </summary>
-        /// <param name="entity"></param>
-        /// <returns></returns>
-        private String getPrimarykeys<TEntityObj>(TEntityObj entity)
-        {
-            if (_primaryKey != null || !String.IsNullOrEmpty(_primaryKey))
-            {
-                return _primaryKey;
-            }
-            using (SqlConnection con = new SqlConnection(ConnectionString))
-            {
-                SqlCommand command = new SqlCommand("paObtenerLlavePrimaria", con);
-                command.CommandType = System.Data.CommandType.StoredProcedure;
-                command.Parameters.AddWithValue("@NombreTabla", entity.GetType().Name);
-
-                SqlParameter outParameter = new SqlParameter();
-                outParameter.ParameterName = "@PrimaryKey";
-                outParameter.SqlDbType = SqlDbType.NVarChar;
-                outParameter.Direction = ParameterDirection.Output;
-                outParameter.Value = "";
-                outParameter.Size = 50;
-                command.Parameters.Add(outParameter);
-
-                con.Open();
-                command.ExecuteNonQuery();
-                _primaryKey = outParameter.Value.ToString();
-            }
-
-            return _primaryKey;
-        }
 
         /// <summary>
         /// Obtiene la cadena de conexion parametrizada
@@ -609,19 +714,9 @@ namespace DataMapper
         /// <returns></returns>
         private bool isIdentity(string columnName)
         {
-            if (_identityColumn == null)
+            if (_identityColumn == "")
             {
-                int result = 0;
-                using (SqlConnection con = new SqlConnection(ConnectionString))
-                {
-                    SqlCommand command = new SqlCommand("PaIsIdentity", con);
-                    command.CommandType = System.Data.CommandType.StoredProcedure;
-                    command.Parameters.AddWithValue("@COLUMN_NAME", columnName);
-                    //FIXME Save identity columns on memory like singleton handles instancies
-                    con.Open();
-                    result = (int)command.ExecuteScalar();
-                    _identityColumn = (result == 0) ? null : columnName;
-                }
+                return false;
             }
             return columnName.Equals(_identityColumn, StringComparison.OrdinalIgnoreCase);
         }
@@ -750,10 +845,19 @@ namespace DataMapper
         /// <returns></returns>
         private String customAttributeFromProperty(PropertyInfo property)
         {
-            var customAttri = property.GetCustomAttributes(false);
-            var columnMapping = customAttri.FirstOrDefault(a => a.GetType() == typeof(ColumnAttribute));
-            ColumnAttribute map = columnMapping as ColumnAttribute;
-            return map.Name;
+            string propiedad = property.ToString();
+            //if (_CustomAttributes == null)
+            //{
+            //    _CustomAttributes = new Dictionary<string, string>();
+            //}
+            if (!_CustomAttributes.ContainsKey(propiedad))
+            {
+                var customAttri = property.GetCustomAttributes(false);
+                var columnMapping = customAttri.FirstOrDefault(a => a.GetType() == typeof(ColumnAttribute));
+                ColumnAttribute map = columnMapping as ColumnAttribute;
+                _CustomAttributes.Add(propiedad, map.Name);
+            }
+            return _CustomAttributes[propiedad];
         }
 
         /// <summary>
@@ -795,7 +899,7 @@ namespace DataMapper
         public TEntityObject ExecuteCreateSP<TEntityObject>(TEntityObject entity, string procedureName, SqlParameterCollection sqlParamsCollection)
         {
             SqlParameter[] parameters = sqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
-            return ExecuteCreateSP<TEntityObject>(entity,procedureName, parameters);
+            return ExecuteCreateSP<TEntityObject>(entity, procedureName, parameters);
         }
 
         public int ExecuteNonQuerySP(string procedureName, SqlParameterCollection sqlParamsCollection)
@@ -803,7 +907,13 @@ namespace DataMapper
             SqlParameter[] parameters = sqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
             return ExecuteNonQuerySP(procedureName, parameters);
         }
-        
+
+        public object ExecuteBooleanSP(string procedureName, SqlParameterCollection sqlParamsCollection)
+        {
+            SqlParameter[] parameters = sqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
+            return ExecuteBooleanSP(procedureName, parameters);
+        }
+
         #endregion
 
         #region Utils

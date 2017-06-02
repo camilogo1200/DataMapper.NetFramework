@@ -6,88 +6,102 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace DataMapperPerformanceExec
 {
     class Program
     {
-        static void Main(string[] args)
+
+        static void Main(String[] args)
         {
-            DataMapper<CentroServicios_NEG> mapper = DataMapper<CentroServicios_NEG>.Instancia;
-            //Stopwatch st = new Stopwatch();
+            DataMapper<AdmisionGiro_GIR> mapper = DataMapper<AdmisionGiro_GIR>.Instancia;
+            string column = "ADG_IdDestinatario";
+            ICollection<AdmisionGiro_GIR> result = mapper.findByAttribute("11", "IdFacturaGiro",true, column);
+            Console.WriteLine(result);
+            Console.Read();
 
-            //SqlParameterCollection cl = new SqlCommand().Parameters;
-            //cl.AddWithValue("IdCiudad", 629);
-            //cl.AddWithValue("IdZona", 1);
-
-            //ICollection<CentroServicios_NEG> lCentrosServicios = mapper.ExecuteSelectSP("paObtenerCSCiudadZona", cl);
-
-            //foreach (CentroServicios_NEG cs in lCentrosServicios) {
-            //    Console.WriteLine("{0} - {1}", cs.NombreCES,cs.IdentificacionCS);
-            //}
-
-
-            CentroServicios_NEG cs = null;
-            int IdCentroServicio = 1;
-
-            ICollection<CentroServicios_NEG> lCentroServicio = null;
-            String nombreProp = mapper.GetPropertyName(() =>  cs.IdentificacionCS);
-
-            lCentroServicio = mapper.findByAttribute(IdCentroServicio.ToString(), nombreProp);
-
-            cs = lCentroServicio?.ElementAt(0);
-            Console.WriteLine("{0} - {1}", cs.NombreCES, cs.IdentificacionCS);
-
-            //String attribute = "Identificacion";
-            //String value = "1020756125";
-            ////st.Start();
-            //Terceros_NEG u = new Terceros_NEG
-            //{
-            //  TipoIdentificacion= 1,
-            //  Identificacion= "1020756127",
-            //  PrimerNombre= "Camilo",
-            //  SegundoNombre= "Andres",
-            //  PrimerApellido= "Corredor",
-            //  SegundoApellido= "pepito",
-            //  RazonSocial= null,
-            //  Telefono= "3000000",
-            //  Direccion= "Calle 5 # 5 -89",
-            //  Email= "pruebas@gmail.com",
-            //  FechaGrabacion= DateTime.Now,
-            //  CreadoPor= 1,
-            //  IdTercero= 2867240,
-            //  EsEmpleado= true,
-            //  EsCliente= true,
-            //  EsPersonaJuridica= false,
-            //  DireccionNormalizada= null,
-            //  ClaveTelefonicaGiros= "123456",
-            //  EsProveedor= false,
-            //  EsContratista= false
-            //};
-
-            //for (int i = 0; i < 2000; i++)
-            //{
-            //    ICollection<Terceros_NEG> collection = mapper.findByAttribute(value, attribute, false);
-            //}
-            // mapper.Create(ref u);
-            //mapper.Update(u);
-            //mapper.Delete(u);
-            //st.Stop();
-            //Console.WriteLine("Elapsed FindByAttr = {0}",st.ElapsedMilliseconds);
-
-
-
-            //st.Restart();
-            //for (int i = 0; i < 2000; i++)
-            //{
-            //    mapper.Create(ref u);
-            //}
-            //st.Stop();
-            //Console.WriteLine("Elapsed Create = {0}", st.ElapsedMilliseconds);
-
-            // Int64 i = mapper.Count();
-
-            //Console.ReadLine();
         }
     }
 }
+
+//        Stopwatch st = new Stopwatch();
+//        st.Start();
+//        try
+//        {
+//            int init = 201;
+//            for (int i = 0; i < 2; i++)
+//            {
+//                new Thread(e =>
+//                {
+//                    NewMethod(init);
+//                }).Start();
+//                init += 2001;
+//            }
+//            List<int> lista = new List<int>();
+//            for (int i = 201; i < 22201; i++)
+//            {
+//                lista.Add(i);
+//            }
+//            Random r = new Random(50000);
+
+//            Parallel.ForEach(lista, item => { NewMethod(item); });
+
+//            mapper.GetAll();
+
+//        }
+//        catch (Exception ex)
+//        {
+//            Console.WriteLine(ex);
+//            Console.Read();
+//        }
+//        st.Stop();
+//        Console.WriteLine("Time : " + st.Elapsed);
+//        Console.WriteLine("Time Milliseconds : " + st.ElapsedMilliseconds);
+//        Console.WriteLine("Time ElapsedTicks : " + st.ElapsedTicks);
+//        Console.ReadLine();
+//    }
+
+//    private static void NewMethod(int init)
+//    {
+//        DataMapper<AdmisionGiro_GIR> mapper = DataMapper<AdmisionGiro_GIR>.Instancia;
+
+
+//        AdmisionGiro_GIR gir = new AdmisionGiro_GIR
+//        {
+
+//            IdFacturaGiro = init,
+//            DigitoVerificacion = "5",
+//            AdmisionAutomatica = true,
+//            IdCentroServicioOrigen = 1,
+//            IdCentroServicioDestino = 2,
+//            ValorGiro = 12000,
+//            TarifaPorcPorte = 0,
+//            ValorPorte = 0,
+//            ValorTotal = 10000,
+//            Observaciones = "prueba15",
+//            IdRemitente = 1,
+//            IdDestinatario = 2,
+//            FechaGrabacion = DateTime.Now,
+//            AnoCreacion = 2017,
+//            MesCreacion = 05,
+//            DiaCreacion = 22,
+//            CreadoPor = 1,
+//            IdTransmision = 1,
+//            IdTelemercadeo = 1,
+//            IdEstadoGiro = 1,
+//            RutaDeclaracionOrigenes = "1",
+//            IdTransaccionGiro = "2",
+//            IdTransmisionTelefonica = 1
+
+//        };
+//        Console.Write(".");
+//        SqlParameter[] parameters = mapper.createParametersFromEntity(gir);
+//        mapper.ExecuteCreateSP<AdmisionGiro_GIR>("paInsertarGiro", parameters);
+//        gir.IdFacturaGiro = i;
+//        mapper.Create(ref gir);
+
+//}
+//    }
+//}

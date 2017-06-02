@@ -31,5 +31,10 @@ E:\Repositories\data-mapper\DataMapperPerformanceExec\obj\Release\DataMapperPerf
 E:\Repositories\data-mapper\DataMapperPerformanceExec\obj\Release\DataMapperPerformanceExec.exe
 E:\Repositories\data-mapper\DataMapperPerformanceExec\obj\Release\DataMapperPerformanceExec.pdb
 C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperPerformanceExec\bin\Release\DataMapperPerformanceExec.exe.config
+C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperPerformanceExec\bin\Release\DataMapperPerformanceExec.exe
+C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperPerformanceExec\bin\Release\DataMapperPerformanceExec.pdb
+C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperPerformanceExec\bin\Release\DataMapper.dll
+C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperPerformanceExec\bin\Release\DataMapper.pdb
+C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperPerformanceExec\obj\Release\DataMapperPerformanceExec.csprojResolveAssemblyReference.cache
 C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperPerformanceExec\obj\Release\DataMapperPerformanceExec.exe
 C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperPerformanceExec\obj\Release\DataMapperPerformanceExec.pdb

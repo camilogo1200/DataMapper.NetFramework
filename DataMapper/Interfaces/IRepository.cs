@@ -14,7 +14,7 @@ namespace Servidor.Comun.DataMapper.DataMapper.Interfaces
         /// Retorna todas las entidades en un IEnumerable a partir del query enviado
         /// </summary>
         /// <returns></returns>
-        ICollection<TEntity> GetAll();
+        ICollection<TEntity> GetAll(string campoOrdenar = null);
 
         void Create(ref TEntity entity);
         /// <summary>
@@ -24,7 +24,7 @@ namespace Servidor.Comun.DataMapper.DataMapper.Interfaces
         /// <param name="Attribute">Nombre del atributo en la entidad EX: "CIU_IdCiudad"</param>
         /// <returns>Una colección de objetos (entidaddes) las cuales cumplen con la condición en le valor del attributo,
         /// si no existe ninguna entidad que cumpla con la condición se retorna null.</returns>
-        ICollection<TEntity> findByAttribute(String value, String Attribute, bool exacto);
+        ICollection<TEntity> findByAttribute(String value, String Attribute, bool exacto, string campoOrdenar = null);
         /// <summary>
         /// Actualiza la entidad que es pasada al metodo
         /// </summary>
@@ -69,5 +69,14 @@ namespace Servidor.Comun.DataMapper.DataMapper.Interfaces
         /// <returns></returns>
         int ExecuteNonQuerySP(string procedureName, params SqlParameter[] sqlParam);
         int ExecuteNonQuerySP(string procedureName, SqlParameterCollection sqlParamsCollection);
+
+        /// <summary>
+        /// Ejecuta un sp que devuelve un boolean.
+        /// </summary>
+        /// <param name="procedureName"></param>
+        /// <param name="sqlParam"></param>
+        /// <returns></returns>
+        object ExecuteBooleanSP(string procedureName, params SqlParameter[] sqlParam);
+        object ExecuteBooleanSP(string procedureName, SqlParameterCollection sqlParamsCollection);
     }
 }
