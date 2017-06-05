@@ -14,7 +14,7 @@ namespace Servidor.Comun.DataMapper.DataMapper.Interfaces
         /// Retorna todas las entidades en un IEnumerable a partir del query enviado
         /// </summary>
         /// <returns></returns>
-        ICollection<TEntity> GetAll(string campoOrdenar = null);
+        ICollection<TEntity> GetAll(string campoOrdenar = null, bool orderDesc = true);
 
         void Create(ref TEntity entity);
         /// <summary>
@@ -24,7 +24,7 @@ namespace Servidor.Comun.DataMapper.DataMapper.Interfaces
         /// <param name="Attribute">Nombre del atributo en la entidad EX: "CIU_IdCiudad"</param>
         /// <returns>Una colección de objetos (entidaddes) las cuales cumplen con la condición en le valor del attributo,
         /// si no existe ninguna entidad que cumpla con la condición se retorna null.</returns>
-        ICollection<TEntity> findByAttribute(String value, String Attribute, bool exacto, string campoOrdenar = null);
+        ICollection<TEntity> findByAttribute(String value, String Attribute, bool exacto, string campoOrdenar = null , bool orderDesc = true);
         /// <summary>
         /// Actualiza la entidad que es pasada al metodo
         /// </summary>

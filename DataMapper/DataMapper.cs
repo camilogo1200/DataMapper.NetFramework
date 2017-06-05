@@ -102,7 +102,8 @@ namespace DataMapper
 
 
         /// <summary>
-        /// Metodo que obtiene cuales columnas de una tabla en la DB son calculadas.
+        /// Metodo que Verifica cuales campos son calculados, Identity y cual es PK para asi 
+        /// excluir los calculados y los identity de las inserciones y guardar la PK en una Variable.
         /// </summary>
         private void CamposEspeciales()
         {
@@ -246,11 +247,13 @@ namespace DataMapper
 
         #region Ejecucion consultas dinamicas
 
-        /// <summary>
-        /// Obtiene todos los registros de una tabla
-        /// </summary>
-        /// <returns></returns>
-        public ICollection<TEntity> GetAll(string campoOrdenar = null)
+      /// <summary>
+      /// Obtiene Tos los campos de una tabla
+      /// </summary>
+      /// <param name="campoOrdenar">OPCIONAL(String nombre del campo por el cual se desea ordenar el resultado de la consulta.)</param>
+      /// <param name="orderDesc">OPCIONAL(Bool true por defecto para seleccionar si se ordena de manera descendente =true o ascendente=false.)</param>
+      /// <returns></returns>
+        public ICollection<TEntity> GetAll(string campoOrdenar = null, bool orderDesc = true)
         {
             ICollection<TEntity> lEntities = null;
             using (SqlConnection con = new SqlConnection(getConnectionString()))
@@ -263,6 +266,7 @@ namespace DataMapper
                 SqlDataReader reader = null;
                 Type type = this.GetType().GenericTypeArguments[0];
                 String sqlSentece = "SELECT  * FROM " + type.Name + " ORDER BY " + campoOrdenar;
+                sqlSentece += (orderDesc) ? " ASC; " : " DESC;";
                 using (SqlCommand command = new SqlCommand(sqlSentece, con))
                 {
                     con.Open();
@@ -422,8 +426,10 @@ namespace DataMapper
         /// <param name="value">Valor del campo en la BD</param>
         /// <param name="attribute">Nombre de la propiedad (Columna) BD</param>
         /// <param name="exacto">indica si el valor a consultar es exacto</param>
+        /// <param name="campoOrdenar">OPCIONAL(String nombre del campo por el cual se desea ordenar el resultado de la consulta.)</param>
+        /// <param name="orderDesc">OPCIONAL(Bool true por defecto para seleccionar si se ordena de manera descendente =true o ascendente=false.)</param>
         /// <returns>La entidad que contiene el valor indicado, de otra manera null</returns>
-        public ICollection<TEntity> findByAttribute(string value, string attribute, bool exacto = true, string campoOrdenar = null)
+        public ICollection<TEntity> findByAttribute(string value, string attribute, bool exacto = true, string campoOrdenar = null, bool orderDesc = true)
         {
             ICollection<TEntity> lEntities = null;
             using (SqlConnection con = new SqlConnection(ConnectionString))
@@ -450,8 +456,9 @@ namespace DataMapper
                     {
                         command.Parameters.AddWithValue("@Value", value);
                     }
-                    _findSQLSentence += "  ORDER BY "+campoOrdenar;
-                    
+                    _findSQLSentence += "  ORDER BY " + campoOrdenar;
+                    sqlSentece += (orderDesc) ? " ASC; " : " DESC;";
+
                     command.CommandType = CommandType.Text;
                     con.Open();
                     reader = command.ExecuteReader(CommandBehavior.CloseConnection);
@@ -463,7 +470,7 @@ namespace DataMapper
                 }
                 con.Close();
             }
-            
+
             return lEntities;
         }
 
@@ -505,9 +512,9 @@ namespace DataMapper
 
             if (_findSQLSentence == null)
             {
-                
+
                 String field = customAttributeFromProperty(property);
-                _findSQLSentence = "SELECT * FROM " + type.Name + " WHERE " + field ;
+                _findSQLSentence = "SELECT * FROM " + type.Name + " WHERE " + field;
                 Type propertyType = property.PropertyType;
                 if (!exacto && propertyType.Equals(Type.GetType("System.String")))
                 {
