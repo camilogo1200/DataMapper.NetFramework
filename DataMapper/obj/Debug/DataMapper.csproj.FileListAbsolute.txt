@@ -10,4 +10,3 @@ C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapper\bi
 C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapper\bin\Debug\DataMapper.pdb
 C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapper\obj\Debug\DataMapper.dll
 C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapper\obj\Debug\DataMapper.pdb
-C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapper\obj\Debug\DataMapper.csprojResolveAssemblyReference.cache

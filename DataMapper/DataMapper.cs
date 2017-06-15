@@ -124,30 +124,38 @@ namespace DataMapper
                     {
                         while (propiedadesReader.Read())
                         {
-                            string key = propiedadesReader["NOMBRE_CAMPO"] == DBNull.Value ? "" : propiedadesReader["NOMBRE_CAMPO"].ToString();
-                            string value = propiedadesReader["PROPIEDAD"] == DBNull.Value ? "" : propiedadesReader["PROPIEDAD"].ToString();
-
-                            switch (value)
+                            try
                             {
-                                case "PK":
-                                    if (!_primaryKeys.ContainsKey(key))
-                                    {
-                                        _primaryKeys.Add(key, true);
-                                    }
-                                    break;
 
-                                case "IDENTITY":
-                                    _identityColumn = key;
-                                    break;
+                                string key = propiedadesReader["NOMBRE_CAMPO"] == DBNull.Value ? "" : propiedadesReader["NOMBRE_CAMPO"].ToString();
+                                string value = propiedadesReader["PROPIEDAD"] == DBNull.Value ? "" : propiedadesReader["PROPIEDAD"].ToString();
 
-                                case "CALCULATE":
-                                    if (!_calculatedKeys.ContainsKey(key))
-                                    {
-                                        _calculatedKeys.Add(key, true);
-                                    }
-                                    break;
-                                default:
-                                    break;
+                                switch (value)
+                                {
+                                    case "PK":
+                                        if (!_primaryKeys.ContainsKey(key))
+                                        {
+                                            _primaryKeys.Add(key, true);
+                                        }
+                                        break;
+
+                                    case "IDENTITY":
+                                        _identityColumn = key;
+                                        break;
+
+                                    case "CALCULATE":
+                                        if (!_calculatedKeys.ContainsKey(key))
+                                        {
+                                            _calculatedKeys.Add(key, true);
+                                        }
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                throw new Exception("NOMBRE_CAMPO Y/O PROPIEDAD no definidas como columnas en el retorno del SP pa_Verificacion_Campos_Especiales.", ex);
                             }
                         }
                     }
@@ -247,20 +255,20 @@ namespace DataMapper
 
         #region Ejecucion consultas dinamicas
 
-      /// <summary>
-      /// Obtiene Tos los campos de una tabla
-      /// </summary>
-      /// <param name="campoOrdenar">OPCIONAL(String nombre del campo por el cual se desea ordenar el resultado de la consulta.)</param>
-      /// <param name="orderDesc">OPCIONAL(Bool true por defecto para seleccionar si se ordena de manera descendente =true o ascendente=false.)</param>
-      /// <returns></returns>
+        /// <summary>
+        /// Obtiene Tos los campos de una tabla
+        /// </summary>
+        /// <param name="campoOrdenar">OPCIONAL(String nombre del campo por el cual se desea ordenar el resultado de la consulta.)</param>
+        /// <param name="orderDesc">OPCIONAL(Bool true por defecto para seleccionar si se ordena de manera descendente =true o ascendente=false.)</param>
+        /// <returns></returns>
         public ICollection<TEntity> GetAll(string campoOrdenar = null, bool orderDesc = true)
         {
             ICollection<TEntity> lEntities = null;
             using (SqlConnection con = new SqlConnection(getConnectionString()))
             {
-                String pk = getPrimarykeys();
                 if (String.IsNullOrEmpty(campoOrdenar))
                 {
+                    String pk = getPrimarykeys();
                     campoOrdenar = pk;
                 }
                 SqlDataReader reader = null;
@@ -443,8 +451,15 @@ namespace DataMapper
                     campoOrdenar = pkey;
 
                 }
-                String sqlSentece = buildFindSqlSentence(property, type, value, exacto);
-                using (SqlCommand command = new SqlCommand(sqlSentece, con))
+                String sqlSentence = null;
+                sqlSentence = buildFindSqlSentence(property, type, value, exacto);
+                if (campoOrdenar != null)
+                {
+                    sqlSentence += " ORDER BY " + campoOrdenar;
+                    sqlSentence += (orderDesc) ? " ASC; " : " DESC;";
+                }
+
+                using (SqlCommand command = new SqlCommand(sqlSentence, con))
 
                 {
                     Type propertyType = property.PropertyType;
@@ -456,8 +471,6 @@ namespace DataMapper
                     {
                         command.Parameters.AddWithValue("@Value", value);
                     }
-                    _findSQLSentence += "  ORDER BY " + campoOrdenar;
-                    sqlSentece += (orderDesc) ? " ASC; " : " DESC;";
 
                     command.CommandType = CommandType.Text;
                     con.Open();
@@ -507,13 +520,13 @@ namespace DataMapper
         /// <param name="property"></param>
         /// <param name="type"></param>
         /// <returns></returns>
-        private string buildFindSqlSentence(PropertyInfo property, Type type, String value = null, bool exacto = true, string campoOrdenar = null)
+        private string buildFindSqlSentence(PropertyInfo property, Type type, String value = null, bool exacto = true)
         {
 
             if (_findSQLSentence == null)
             {
-
-                String field = customAttributeFromProperty(property);
+                String field = null;
+                field = customAttributeFromProperty(property);
                 _findSQLSentence = "SELECT * FROM " + type.Name + " WHERE " + field;
                 Type propertyType = property.PropertyType;
                 if (!exacto && propertyType.Equals(Type.GetType("System.String")))
@@ -615,6 +628,24 @@ namespace DataMapper
         }
 
         /// <summary>
+        /// Metodo publico que ejecuta un procedimiento almacenado de consulta, actualizacion, creacion o eliminacion
+        /// </summary>
+        /// <param name="procedureName"></param>
+        /// <param name="executeType"></param>
+        /// <param name="sqlParams"></param>
+        /// <returns></returns>
+        public object ExecuteProcedure(string procedureName, ExecuteType executeType, params SqlParameter[] sqlParams)
+        {
+            object result = null;
+            using (SqlConnection connection = new SqlConnection(ConnectionString))
+            {
+                connection.Open();
+                result = ExecuteProcedure(procedureName, executeType, connection, sqlParams);
+            }
+            return result;
+        }
+
+        /// <summary>
         /// Ejecuta un procedimiento almacenado de consulta, actualizacion, creacion o eliminacion
         /// </summary>
         /// <param name="procedureName"></param>
@@ -622,7 +653,7 @@ namespace DataMapper
         /// <param name="conection"></param>
         /// <param name="sqlParams"></param>
         /// <returns></returns>
-        private object ExecuteProcedure(string procedureName, ExecuteType executeType, SqlConnection conection, params SqlParameter[] sqlParams)
+        public object ExecuteProcedure(string procedureName, ExecuteType executeType, SqlConnection conection, params SqlParameter[] sqlParams)
         {
             object returnObject = null;
             using (var cmd = conection.CreateCommand())

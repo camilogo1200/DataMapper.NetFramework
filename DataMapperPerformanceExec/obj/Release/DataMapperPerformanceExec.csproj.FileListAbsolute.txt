@@ -38,3 +38,5 @@ C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperPer
 C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperPerformanceExec\obj\Release\DataMapperPerformanceExec.csprojResolveAssemblyReference.cache
 C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperPerformanceExec\obj\Release\DataMapperPerformanceExec.exe
 C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperPerformanceExec\obj\Release\DataMapperPerformanceExec.pdb
+C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperPerformanceExec\bin\Release\RestSharp.dll
+C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperPerformanceExec\bin\Release\RestSharp.xml
