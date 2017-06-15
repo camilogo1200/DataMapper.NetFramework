@@ -40,3 +40,4 @@ C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperUni
 C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperUnitTest\obj\Release\DataMapperUnitTest.csprojResolveAssemblyReference.cache
 C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperUnitTest\obj\Release\DataMapperUnitTest.dll
 C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperUnitTest\obj\Release\DataMapperUnitTest.pdb
+C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperUnitTest\bin\Release\DataMapper.pdb

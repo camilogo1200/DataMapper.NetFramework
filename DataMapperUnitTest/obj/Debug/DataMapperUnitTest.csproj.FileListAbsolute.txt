@@ -21,6 +21,7 @@ C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperUni
 C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperUnitTest\bin\Debug\DataMapperUnitTest.pdb
 C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperUnitTest\bin\Debug\DataMapper.dll
 C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperUnitTest\bin\Debug\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll
+C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperUnitTest\bin\Debug\DataMapper.pdb
 C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperUnitTest\obj\Debug\DataMapperUnitTest.csprojResolveAssemblyReference.cache
 C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperUnitTest\obj\Debug\DataMapperUnitTest.dll
 C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperUnitTest\obj\Debug\DataMapperUnitTest.pdb

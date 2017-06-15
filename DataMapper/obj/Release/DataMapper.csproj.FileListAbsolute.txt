@@ -18,3 +18,4 @@ C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapper\bi
 C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapper\bin\Release\DataMapper.pdb
 C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapper\obj\Release\DataMapper.dll
 C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapper\obj\Release\DataMapper.pdb
+C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapper\obj\Release\DataMapper.csprojResolveAssemblyReference.cache

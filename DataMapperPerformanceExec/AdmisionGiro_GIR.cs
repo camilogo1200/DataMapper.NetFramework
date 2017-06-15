@@ -135,12 +135,6 @@ namespace DataMapperPerformanceExec
         public string RutaDeclaracionOrigenes { get; set; }
 
         /// <summary>
-        /// Firma Giro  Id Transaccion Giro
-        /// </summary>
-        [Column("ADG_IdTransaccionGiro")]
-        public string IdTransaccionGiro { get; set; }
-
-        /// <summary>
         /// Identificación Transmisión Telefónica
         /// </summary>
         [Column("ADG_IdTransmisionTelefonica")]
