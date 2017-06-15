@@ -42,8 +42,8 @@
     <OutputPath>bin\rrr\</OutputPath>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DataMapper, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\DataMapper.1.0.0\lib\net452\DataMapper.dll</HintPath>
+    <Reference Include="DataMapper, Version=1.2.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\DataMapper.2.0.5\lib\net452\DataMapper.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
