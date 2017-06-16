@@ -445,12 +445,7 @@ namespace DataMapper
                 SqlDataReader reader = null;
                 Type type = this.GetType().GenericTypeArguments[0];
                 PropertyInfo property = type.GetProperty(attribute);
-                if (String.IsNullOrEmpty(campoOrdenar))
-                {
-                    String pkey = getPrimarykeys();
-                    campoOrdenar = pkey;
 
-                }
                 String sqlSentence = null;
                 sqlSentence = buildFindSqlSentence(property, type, value, exacto);
                 if (campoOrdenar != null)
@@ -458,7 +453,17 @@ namespace DataMapper
                     sqlSentence += " ORDER BY " + campoOrdenar;
                     sqlSentence += (orderDesc) ? " ASC; " : " DESC;";
                 }
-
+                else
+                {
+                    if (String.IsNullOrEmpty(campoOrdenar))
+                    {
+                        String pkey = getPrimarykeys();
+                        campoOrdenar = pkey;
+                        sqlSentence += " ORDER BY " + campoOrdenar;
+                        sqlSentence += (orderDesc) ? " ASC; " : " DESC;";
+                    }
+                }
+                Console.WriteLine(sqlSentence);
                 using (SqlCommand command = new SqlCommand(sqlSentence, con))
 
                 {

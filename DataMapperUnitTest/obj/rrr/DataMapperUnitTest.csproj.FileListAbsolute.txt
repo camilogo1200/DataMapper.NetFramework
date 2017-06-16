@@ -1,6 +1,0 @@
-E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperUnitTest\bin\rrr\DataMapperUnitTest.dll.config
-E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperUnitTest\bin\rrr\DataMapperUnitTest.dll
-E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperUnitTest\bin\rrr\DataMapper.dll
-E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperUnitTest\bin\rrr\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll
-E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperUnitTest\obj\rrr\DataMapperUnitTest.csprojResolveAssemblyReference.cache
-E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperUnitTest\obj\rrr\DataMapperUnitTest.dll

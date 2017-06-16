@@ -1,34 +1,10 @@
-C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapperPerformanceExec\bin\Debug\DataMapperPerformanceExec.exe.config
-C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapperPerformanceExec\bin\Debug\DataMapperPerformanceExec.exe
-C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapperPerformanceExec\bin\Debug\DataMapperPerformanceExec.pdb
-C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapperPerformanceExec\bin\Debug\DataMapper.dll
-C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapperPerformanceExec\bin\Debug\DataMapper.pdb
-C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapperPerformanceExec\obj\Debug\DataMapperPerformanceExec.csprojResolveAssemblyReference.cache
-C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapperPerformanceExec\obj\Debug\DataMapperPerformanceExec.exe
-C:\Users\Camilo\Documents\Visual Studio 2015\Projects\DataMapper\DataMapperPerformanceExec\obj\Debug\DataMapperPerformanceExec.pdb
-E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperPerformanceExec\bin\Debug\DataMapperPerformanceExec.exe.config
-E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperPerformanceExec\bin\Debug\DataMapperPerformanceExec.exe
-E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperPerformanceExec\bin\Debug\DataMapperPerformanceExec.pdb
-E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperPerformanceExec\bin\Debug\DataMapper.dll
-E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperPerformanceExec\bin\Debug\DataMapper.pdb
-E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperPerformanceExec\obj\Debug\DataMapperPerformanceExec.csprojResolveAssemblyReference.cache
-E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperPerformanceExec\obj\Debug\DataMapperPerformanceExec.exe
-E:\Version_1.4.0\Servidor\Comun\DataMapper\DataMapperPerformanceExec\obj\Debug\DataMapperPerformanceExec.pdb
 E:\Repositories\data-mapper\DataMapperPerformanceExec\obj\Debug\DataMapperPerformanceExec.csprojResolveAssemblyReference.cache
 E:\Repositories\data-mapper\DataMapperPerformanceExec\bin\Debug\DataMapperPerformanceExec.exe.config
 E:\Repositories\data-mapper\DataMapperPerformanceExec\bin\Debug\DataMapperPerformanceExec.exe
 E:\Repositories\data-mapper\DataMapperPerformanceExec\bin\Debug\DataMapperPerformanceExec.pdb
 E:\Repositories\data-mapper\DataMapperPerformanceExec\bin\Debug\DataMapper.dll
+E:\Repositories\data-mapper\DataMapperPerformanceExec\bin\Debug\RestSharp.dll
 E:\Repositories\data-mapper\DataMapperPerformanceExec\bin\Debug\DataMapper.pdb
+E:\Repositories\data-mapper\DataMapperPerformanceExec\bin\Debug\RestSharp.xml
 E:\Repositories\data-mapper\DataMapperPerformanceExec\obj\Debug\DataMapperPerformanceExec.exe
 E:\Repositories\data-mapper\DataMapperPerformanceExec\obj\Debug\DataMapperPerformanceExec.pdb
-C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperPerformanceExec\bin\Debug\DataMapperPerformanceExec.exe.config
-C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperPerformanceExec\bin\Debug\DataMapperPerformanceExec.exe
-C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperPerformanceExec\bin\Debug\DataMapperPerformanceExec.pdb
-C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperPerformanceExec\bin\Debug\DataMapper.dll
-C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperPerformanceExec\bin\Debug\RestSharp.dll
-C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperPerformanceExec\bin\Debug\DataMapper.pdb
-C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperPerformanceExec\bin\Debug\RestSharp.xml
-C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperPerformanceExec\obj\Debug\DataMapperPerformanceExec.csprojResolveAssemblyReference.cache
-C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperPerformanceExec\obj\Debug\DataMapperPerformanceExec.exe
-C:\Users\miguelalaraa\Documents\Visual Studio 2015\Projects\Mapper\DataMapperPerformanceExec\obj\Debug\DataMapperPerformanceExec.pdb
