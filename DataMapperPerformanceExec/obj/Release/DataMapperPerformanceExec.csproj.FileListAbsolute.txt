@@ -8,3 +8,13 @@ E:\Repositories\data-mapper\DataMapperPerformanceExec\bin\Release\RestSharp.xml
 E:\Repositories\data-mapper\DataMapperPerformanceExec\obj\Release\DataMapperPerformanceExec.csprojResolveAssemblyReference.cache
 E:\Repositories\data-mapper\DataMapperPerformanceExec\obj\Release\DataMapperPerformanceExec.exe
 E:\Repositories\data-mapper\DataMapperPerformanceExec\obj\Release\DataMapperPerformanceExec.pdb
+E:\Mapper\DataMapperPerformanceExec\bin\Release\DataMapperPerformanceExec.exe.config
+E:\Mapper\DataMapperPerformanceExec\bin\Release\DataMapperPerformanceExec.exe
+E:\Mapper\DataMapperPerformanceExec\bin\Release\DataMapperPerformanceExec.pdb
+E:\Mapper\DataMapperPerformanceExec\bin\Release\DataMapper.dll
+E:\Mapper\DataMapperPerformanceExec\bin\Release\RestSharp.dll
+E:\Mapper\DataMapperPerformanceExec\bin\Release\DataMapper.pdb
+E:\Mapper\DataMapperPerformanceExec\bin\Release\RestSharp.xml
+E:\Mapper\DataMapperPerformanceExec\obj\Release\DataMapperPerformanceExec.csprojResolveAssemblyReference.cache
+E:\Mapper\DataMapperPerformanceExec\obj\Release\DataMapperPerformanceExec.exe
+E:\Mapper\DataMapperPerformanceExec\obj\Release\DataMapperPerformanceExec.pdb

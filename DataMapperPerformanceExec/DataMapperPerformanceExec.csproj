@@ -79,6 +79,7 @@
     <Compile Include="ParametrosGiros_GIR.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Servicio.cs" />
     <Compile Include="SuministroWrapper.cs" />
     <Compile Include="Terceros_NEG.cs" />
     <Compile Include="Usuario.cs" />

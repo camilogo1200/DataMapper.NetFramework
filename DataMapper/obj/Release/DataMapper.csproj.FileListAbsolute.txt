@@ -1,4 +1,4 @@
-E:\Repositories\data-mapper\DataMapper\bin\Release\DataMapper.dll
-E:\Repositories\data-mapper\DataMapper\bin\Release\DataMapper.pdb
-E:\Repositories\data-mapper\DataMapper\obj\Release\DataMapper.dll
-E:\Repositories\data-mapper\DataMapper\obj\Release\DataMapper.pdb
+E:\Mapper\DataMapper\bin\Release\DataMapper.dll
+E:\Mapper\DataMapper\bin\Release\DataMapper.pdb
+E:\Mapper\DataMapper\obj\Release\DataMapper.dll
+E:\Mapper\DataMapper\obj\Release\DataMapper.pdb

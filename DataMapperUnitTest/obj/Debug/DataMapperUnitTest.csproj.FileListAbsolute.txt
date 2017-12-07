@@ -6,3 +6,4 @@ E:\Repositories\data-mapper\DataMapperUnitTest\bin\Debug\Microsoft.VisualStudio.
 E:\Repositories\data-mapper\DataMapperUnitTest\obj\Debug\DataMapperUnitTest.csprojResolveAssemblyReference.cache
 E:\Repositories\data-mapper\DataMapperUnitTest\obj\Debug\DataMapperUnitTest.dll
 E:\Repositories\data-mapper\DataMapperUnitTest\obj\Debug\DataMapperUnitTest.pdb
+E:\Mapper\DataMapperUnitTest\obj\Debug\DataMapperUnitTest.csprojResolveAssemblyReference.cache

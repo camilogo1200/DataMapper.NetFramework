@@ -6,3 +6,4 @@ E:\Repositories\data-mapper\DataMapperUnitTest\bin\Release\Microsoft.VisualStudi
 E:\Repositories\data-mapper\DataMapperUnitTest\obj\Release\DataMapperUnitTest.csprojResolveAssemblyReference.cache
 E:\Repositories\data-mapper\DataMapperUnitTest\obj\Release\DataMapperUnitTest.dll
 E:\Repositories\data-mapper\DataMapperUnitTest\obj\Release\DataMapperUnitTest.pdb
+E:\Mapper\DataMapperUnitTest\obj\Release\DataMapperUnitTest.csprojResolveAssemblyReference.cache
