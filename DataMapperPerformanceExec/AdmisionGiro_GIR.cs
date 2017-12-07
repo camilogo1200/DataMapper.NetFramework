@@ -57,10 +57,8 @@ namespace DataMapperPerformanceExec
         [Column("ADG_ValorPorte")]
         public decimal ValorPorte { get; set; }
 
-
         [Column("ADG_ValorTotal")]
         public decimal? ValorTotal { get; set; }
-
 
         /// <summary>
         /// Para agregar comentario adicionales en la Admisión del Giro.
@@ -69,16 +67,34 @@ namespace DataMapperPerformanceExec
         public string Observaciones { get; set; }
 
         /// <summary>
-        /// Identificación del Remitente
+        /// Idn del Remitente
         /// </summary>
         [Column("ADG_IdRemitente")]
         public long IdRemitente { get; set; }
 
         /// <summary>
-        /// Identificación del destinatario
+        /// Identificación del remitente
+        /// </summary>
+        [Column("IdentificacionRem")]
+        public string IdentificacionRemitente { get; set; }
+
+        [Column("ADG_NombreRemitente")]
+        public string NombreRemitente { get; set; }
+
+        [Column("ADG_NombreDestinatario")]
+        public string NombreDestinatario { get; set; }
+
+        /// <summary>
+        /// Id del destinatario
         /// </summary>
         [Column("ADG_IdDestinatario")]
         public long IdDestinatario { get; set; }
+
+        /// <summary>
+        /// Identificación del destinatario
+        /// </summary>
+        [Column("IdentificacionDes")]
+        public string IdentificacionDestinatario { get; set; }
 
         /// <summary>
         /// Fecha de grabación
@@ -138,6 +154,13 @@ namespace DataMapperPerformanceExec
         /// Identificación Transmisión Telefónica
         /// </summary>
         [Column("ADG_IdTransmisionTelefonica")]
-        public long IdTransmisionTelefonica { get; set; }
+        public long? IdTransmisionTelefonica { get; set; }
+
+        public string NumeroCelularDestinatario { get; set; }
+        public string NumeroCelularRemitente { get; set; }
+        public string Usuario { get; set; }
+        public string TipoCentroServicioSuministros { get; set; }
+
+
     }
 }

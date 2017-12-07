@@ -4,6 +4,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DataMapper;
 
 namespace Servidor.Comun.DataMapper.DataMapper.Interfaces
 {
@@ -76,7 +77,10 @@ namespace Servidor.Comun.DataMapper.DataMapper.Interfaces
         /// <param name="procedureName"></param>
         /// <param name="sqlParam"></param>
         /// <returns></returns>
-        object ExecuteBooleanSP(string procedureName, params SqlParameter[] sqlParam);
-        object ExecuteBooleanSP(string procedureName, SqlParameterCollection sqlParamsCollection);
+        object ExecuteGeneralSP(string procedureName, params SqlParameter[] sqlParam);
+        object ExecuteGeneralSP(string procedureName, SqlParameterCollection sqlParamsCollection);
+
+        object ExecuteProcedure(string procedureName, ExecuteType executeType, params SqlParameter[] sqlParam);
+        object ExecuteProcedure(string procedureName, ExecuteType executeType, SqlParameterCollection sqlParamsCollection);
     }
 }

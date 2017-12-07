@@ -189,10 +189,12 @@ namespace DataMapper
                     {
                         PropertyInfo property = properties.ElementAt(i);
                         String prop = customAttributeFromProperty(property);
-
-                        if (!isIdentity(prop) && !_calculatedKeys.ContainsKey(prop))
+                        if (!String.Equals(prop, property.Name))
                         {
-                            _insertStatement += (i < properties.Count - 1) ? prop + ", " : prop;
+                            if (!isIdentity(prop) && !_calculatedKeys.ContainsKey(prop))
+                            {
+                                _insertStatement += (i < properties.Count - 1) ? prop + ", " : prop;
+                            }
                         }
                     }
                     _insertStatement += " )" + " VALUES (";
@@ -591,11 +593,11 @@ namespace DataMapper
                 connection.Open();
                 //Set Object Id
                 Type type = entity.GetType();
-
+                 
                 PropertyInfo property = propertyFromCustomAttribute(pk);
                 TypeConverter converter = TypeDescriptor.GetConverter(property.PropertyType);
                 string Ident = ExecuteProcedure(procedureName, ExecuteType.ExecuteScalar, connection, sqlParam)?.ToString();
-                if (string.IsNullOrEmpty(Ident))
+                if (!string.IsNullOrEmpty(Ident))
                 {
                     var result = converter.ConvertFrom(Ident);
                     property.SetValue(entity, result, null);
@@ -665,17 +667,20 @@ namespace DataMapper
             {
                 cmd.CommandText = procedureName;
                 cmd.CommandType = CommandType.StoredProcedure;
-                // get parameters procedure
-                SqlCommandBuilder.DeriveParameters(cmd);
-                foreach (SqlParameter parm in cmd.Parameters)
-                {
-                    parm.IsNullable = true;
-
-                    foreach (SqlParameter parmeter in sqlParams)
+                if(sqlParams != null)
                     {
-                        if (parm.ParameterName.Replace("@", "").ToUpper() == parmeter.ParameterName.Replace("@", "").ToUpper())
+                    // get parameters procedure
+                    SqlCommandBuilder.DeriveParameters(cmd);
+                    foreach (SqlParameter parm in cmd.Parameters)
+                    {
+                        parm.IsNullable = true;
+
+                        foreach (SqlParameter parmeter in sqlParams)
                         {
-                            parm.Value = parmeter.Value ?? DBNull.Value;
+                            if (parm.ParameterName.Replace("@", "").ToUpper() == parmeter.ParameterName.Replace("@", "").ToUpper())
+                            {
+                                parm.Value = parmeter.Value ?? DBNull.Value;
+                            }
                         }
                     }
                 }
@@ -705,7 +710,7 @@ namespace DataMapper
         /// <param name="procedureName"></param>
         /// <param name="sqlParam"></param>
         /// <returns></returns>
-        public object ExecuteBooleanSP(string procedureName, params SqlParameter[] sqlParam)
+        public object ExecuteGeneralSP(string procedureName, params SqlParameter[] sqlParam)
         {
             object returnValue;
 
@@ -868,6 +873,7 @@ namespace DataMapper
         /// <returns></returns>
         private PropertyInfo propertyFromCustomAttribute(String customAttribute)
         {
+            PropertyInfo attr = null;
             var properties = typeof(TEntity).GetProperties()
                       .Where(p => p.IsDefined(typeof(ColumnAttribute), false))
                       .Select(p => new
@@ -876,8 +882,11 @@ namespace DataMapper
                           p.GetCustomAttributes(typeof(ColumnAttribute),
                                   false).Cast<ColumnAttribute>().Single().Name
                       });
-            String columnMapping = properties.FirstOrDefault(a => a.Name == customAttribute).PropertyName;
-            PropertyInfo attr = typeof(TEntity).GetProperty(columnMapping);
+            String columnMapping = properties.FirstOrDefault(a => a.Name == customAttribute)?.PropertyName;
+            if (!String.IsNullOrEmpty(columnMapping))
+            {
+                attr = typeof(TEntity).GetProperty(columnMapping);
+            }
             return attr;
         }
 
@@ -889,15 +898,16 @@ namespace DataMapper
         private String customAttributeFromProperty(PropertyInfo property)
         {
             string propiedad = property.ToString();
-            //if (_CustomAttributes == null)
-            //{
-            //    _CustomAttributes = new Dictionary<string, string>();
-            //}
+         
             if (!_CustomAttributes.ContainsKey(propiedad))
             {
                 var customAttri = property.GetCustomAttributes(false);
                 var columnMapping = customAttri.FirstOrDefault(a => a.GetType() == typeof(ColumnAttribute));
                 ColumnAttribute map = columnMapping as ColumnAttribute;
+                if (map == null)
+                {
+                    return property.Name;
+                }
                 _CustomAttributes.Add(propiedad, map.Name);
             }
             return _CustomAttributes[propiedad];
@@ -935,7 +945,12 @@ namespace DataMapper
 
         public ICollection<TEntity> ExecuteSelectSP(string procedureName, SqlParameterCollection sqlParamsCollection = null)
         {
-            SqlParameter[] parameters = sqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
+
+            SqlParameter[] parameters = null;
+            if (sqlParamsCollection != null)
+            {
+               parameters = sqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
+            }
             return ExecuteSelectSP(procedureName, parameters);
         }
 
@@ -951,10 +966,15 @@ namespace DataMapper
             return ExecuteNonQuerySP(procedureName, parameters);
         }
 
-        public object ExecuteBooleanSP(string procedureName, SqlParameterCollection sqlParamsCollection)
+        public object ExecuteGeneralSP(string procedureName, SqlParameterCollection sqlParamsCollection)
         {
             SqlParameter[] parameters = sqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
-            return ExecuteBooleanSP(procedureName, parameters);
+            return ExecuteGeneralSP(procedureName, parameters);
+        }
+        public object ExecuteProcedure(string procedureName, ExecuteType executeType, SqlParameterCollection sqlParamsCollection)
+        {
+            SqlParameter[] parameters = sqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
+            return ExecuteProcedure(procedureName, executeType, parameters);
         }
 
         #endregion

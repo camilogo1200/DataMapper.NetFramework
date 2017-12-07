@@ -127,6 +127,21 @@ namespace DataMapperPerformanceExec
         /// </summary>
         [Column("TER_EsContratista")]
         public bool? EsContratista { get; set; }
+        /// <summary>
+        /// Define si el cliente es credito o no
+        /// </summary>
+        [Column("TER_EsClienteCredito")]
+        public bool EsClienteCredito { get; set; }
+        /// <summary>
+        /// Define la ciudad del tercero
+        /// </summary>
+        [Column("TER_Ciudad")]
+        public long Ciudad { get; set; }
+        /// <summary>
+        /// Muestra si es representanyte legal
+        /// </summary>
+        [Column("TER_EsRepresentanteLegal")]
+        public bool Representantelegal { get; set; }
 
 
     }
