@@ -596,8 +596,9 @@ namespace DataMapper
                  
                 PropertyInfo property = propertyFromCustomAttribute(pk);
                 TypeConverter converter = TypeDescriptor.GetConverter(property.PropertyType);
+                string valorIn = property.GetValue(entity)?.ToString();
                 string Ident = ExecuteProcedure(procedureName, ExecuteType.ExecuteScalar, connection, sqlParam)?.ToString();
-                if (!string.IsNullOrEmpty(Ident))
+                if (!string.IsNullOrEmpty(Ident) && (string.IsNullOrEmpty(valorIn) || valorIn == "0"))
                 {
                     var result = converter.ConvertFrom(Ident);
                     property.SetValue(entity, result, null);
