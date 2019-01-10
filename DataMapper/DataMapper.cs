@@ -1,17 +1,19 @@
-﻿using System;
+﻿using DataMapper.Models;
+using Newtonsoft.Json;
+using Servidor.Comun.DataMapper.DataMapper.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Linq.Expressions;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
-using System.Configuration;
-using Servidor.Comun.DataMapper.DataMapper.Interfaces;
-using System.ComponentModel;
-using Servidor.Comun.DataMapper;
-using System.Threading;
+using System.Security.Principal;
+using System.Text;
 
 namespace DataMapper
 {
@@ -42,7 +44,10 @@ namespace DataMapper
 
         private static volatile DataMapper<TEntity> instancia;
 
-        private DataMapper() { }
+        private DataMapper() {
+            string enableAuditDatabase = ConfigurationManager.AppSettings["Enable_Audit"].ToString();
+            this._isAuditEnable =  string.IsNullOrEmpty(enableAuditDatabase) ? true : Convert.ToBoolean(enableAuditDatabase);
+        }
 
         /// <summary>
         /// Cadena de Conexión a la BD
@@ -91,6 +96,10 @@ namespace DataMapper
                 return instancia;
             }
         }
+
+        public bool _isAuditEnable { get; set; }
+        public string _sqlConsoleMessage { get; set; }
+
         #endregion
 
 
@@ -107,62 +116,73 @@ namespace DataMapper
         /// </summary>
         private void CamposEspeciales()
         {
-
-            if (_primaryKeys == null || _calculatedKeys == null || _identityColumn == null)
+            try
             {
-                _nombretabla = typeof(TEntity).Name;
-                using (SqlConnection con = new SqlConnection(ConnectionString))
+                if (_primaryKeys == null || _calculatedKeys == null || _identityColumn == null)
                 {
-                    con.Open();
-                    _primaryKeys = new Dictionary<string, bool>();
-                    _calculatedKeys = new Dictionary<string, bool>();
-                    SqlCommand command = new SqlCommand("dbo.pa_Verificacion_Campos_Especiales", con);
-                    command.CommandType = System.Data.CommandType.StoredProcedure;
-                    command.Parameters.AddWithValue("@Table_Name", _nombretabla);
-                    SqlDataReader propiedadesReader = command.ExecuteReader();
-                    if (propiedadesReader.HasRows)
+                    _nombretabla = typeof(TEntity).Name;
+                    using (SqlConnection con = new SqlConnection(ConnectionString))
                     {
-                        while (propiedadesReader.Read())
+                        con.Open();
+                        _primaryKeys = new Dictionary<string, bool>();
+                        _calculatedKeys = new Dictionary<string, bool>();
+                        SqlCommand command = new SqlCommand("dbo.pa_Verificacion_Campos_Especiales", con)
                         {
-                            try
+                            CommandType = System.Data.CommandType.StoredProcedure
+                        };
+                        command.Parameters.AddWithValue("@Table_Name", _nombretabla);
+                        SqlDataReader propiedadesReader = command.ExecuteReader();
+                        if (propiedadesReader.HasRows)
+                        {
+                            while (propiedadesReader.Read())
                             {
-
-                                string key = propiedadesReader["NOMBRE_CAMPO"] == DBNull.Value ? "" : propiedadesReader["NOMBRE_CAMPO"].ToString();
-                                string value = propiedadesReader["PROPIEDAD"] == DBNull.Value ? "" : propiedadesReader["PROPIEDAD"].ToString();
-
-                                switch (value)
+                                try
                                 {
-                                    case "PK":
-                                        if (!_primaryKeys.ContainsKey(key))
-                                        {
-                                            _primaryKeys.Add(key, true);
-                                        }
-                                        break;
 
-                                    case "IDENTITY":
-                                        _identityColumn = key;
-                                        break;
+                                    string key = propiedadesReader["NOMBRE_CAMPO"] == DBNull.Value ? "" : propiedadesReader["NOMBRE_CAMPO"].ToString();
+                                    string value = propiedadesReader["PROPIEDAD"] == DBNull.Value ? "" : propiedadesReader["PROPIEDAD"].ToString();
 
-                                    case "CALCULATE":
-                                        if (!_calculatedKeys.ContainsKey(key))
-                                        {
-                                            _calculatedKeys.Add(key, true);
-                                        }
-                                        break;
-                                    default:
-                                        break;
+                                    switch (value)
+                                    {
+                                        case "PK":
+                                            if (!_primaryKeys.ContainsKey(key))
+                                            {
+                                                _primaryKeys.Add(key, true);
+                                            }
+                                            break;
+
+                                        case "IDENTITY":
+                                            _identityColumn = key;
+                                            break;
+
+                                        case "CALCULATE":
+                                            if (!_calculatedKeys.ContainsKey(key))
+                                            {
+                                                _calculatedKeys.Add(key, true);
+                                            }
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    throw new Exception("NOMBRE_CAMPO Y/O PROPIEDAD no definidas como columnas en el retorno del SP pa_Verificacion_Campos_Especiales.", ex);
                                 }
                             }
-                            catch (Exception ex)
-                            {
-                                throw new Exception("NOMBRE_CAMPO Y/O PROPIEDAD no definidas como columnas en el retorno del SP pa_Verificacion_Campos_Especiales.", ex);
-                            }
                         }
+                        if (_identityColumn == null) { _identityColumn = ""; }
+                        con.Close();
                     }
-                    if (_identityColumn == null) { _identityColumn = ""; }
-                    con.Close();
-                }
 
+                }
+            }
+            catch (SqlException ExSQL)
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.Append("DataMapper<").Append(_nombretabla).Append("> : ");
+                sb.Append(ExSQL.Message).Append(" - Server : ").Append(ExSQL.Server);
+                throw new Exception(sb.ToString());
             }
         }
 
@@ -191,7 +211,7 @@ namespace DataMapper
                         String prop = customAttributeFromProperty(property);
                         if (!String.Equals(prop, property.Name))
                         {
-                            if (!isIdentity(prop) && !_calculatedKeys.ContainsKey(prop))
+                            if (!IsIdentity(prop) && !_calculatedKeys.ContainsKey(prop))
                             {
                                 _insertStatement += (i < properties.Count - 1) ? prop + ", " : prop;
                             }
@@ -203,7 +223,7 @@ namespace DataMapper
                     {
                         PropertyInfo property = properties.ElementAt(i);
                         String prop = customAttributeFromProperty(property);
-                        if (!isIdentity(prop) && !_calculatedKeys.ContainsKey(prop))
+                        if (!IsIdentity(prop) && !_calculatedKeys.ContainsKey(prop))
                         {
                             _insertStatement += (i < properties.Count - 1) ? "@" + prop + ", " : "@" + prop;
                         }
@@ -274,7 +294,7 @@ namespace DataMapper
                     campoOrdenar = pk;
                 }
                 SqlDataReader reader = null;
-                Type type = this.GetType().GenericTypeArguments[0];
+                Type type = GetType().GenericTypeArguments[0];
                 String sqlSentece = "SELECT  * FROM " + type.Name + " ORDER BY " + campoOrdenar;
                 sqlSentece += (orderDesc) ? " ASC; " : " DESC;";
                 using (SqlCommand command = new SqlCommand(sqlSentece, con))
@@ -445,7 +465,7 @@ namespace DataMapper
             using (SqlConnection con = new SqlConnection(ConnectionString))
             {
                 SqlDataReader reader = null;
-                Type type = this.GetType().GenericTypeArguments[0];
+                Type type = GetType().GenericTypeArguments[0];
                 PropertyInfo property = type.GetProperty(attribute);
 
                 String sqlSentence = null;
@@ -501,7 +521,7 @@ namespace DataMapper
         /// <returns>Numero de entidades con persistencia en BD</returns>
         public long Count()
         {
-            Type type = this.GetType().GenericTypeArguments[0];
+            Type type = GetType().GenericTypeArguments[0];
             Object rowsST;
             if (_countSentence == null)
             {
@@ -593,7 +613,7 @@ namespace DataMapper
                 connection.Open();
                 //Set Object Id
                 Type type = entity.GetType();
-                 
+
                 PropertyInfo property = propertyFromCustomAttribute(pk);
                 TypeConverter converter = TypeDescriptor.GetConverter(property.PropertyType);
                 string valorIn = property.GetValue(entity)?.ToString();
@@ -663,46 +683,173 @@ namespace DataMapper
         /// <returns></returns>
         public object ExecuteProcedure(string procedureName, ExecuteType executeType, SqlConnection conection, params SqlParameter[] sqlParams)
         {
+           
             object returnObject = null;
-            using (var cmd = conection.CreateCommand())
-            {
-                cmd.CommandText = procedureName;
-                cmd.CommandType = CommandType.StoredProcedure;
-                if(sqlParams != null)
-                    {
-                    // get parameters procedure
-                    SqlCommandBuilder.DeriveParameters(cmd);
-                    foreach (SqlParameter parm in cmd.Parameters)
-                    {
-                        parm.IsNullable = true;
+            long ExecutionId = 0;
+            string SQLConsoleMessages;
 
-                        foreach (SqlParameter parmeter in sqlParams)
+            try
+            {
+                using (var cmd = conection.CreateCommand())
+                {
+
+
+                    cmd.CommandText = procedureName;
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    if (sqlParams != null)
+                    {
+                        // get parameters procedure
+                        SqlCommandBuilder.DeriveParameters(cmd);
+                        foreach (SqlParameter parm in cmd.Parameters)
                         {
-                            if (parm.ParameterName.Replace("@", "").ToUpper() == parmeter.ParameterName.Replace("@", "").ToUpper())
+                            parm.IsNullable = true;
+
+                            foreach (SqlParameter parmeter in sqlParams)
                             {
-                                parm.Value = parmeter.Value ?? DBNull.Value;
+                                if (parm.ParameterName.Replace("@", "").ToUpper() == parmeter.ParameterName.Replace("@", "").ToUpper())
+                                {
+                                    parm.Value = parmeter.Value ?? DBNull.Value;
+                                }
                             }
                         }
                     }
-                }
 
-                switch (executeType)
-                {
-                    case ExecuteType.ExecuteReader:
-                        returnObject = cmd.ExecuteReader();
-                        break;
-                    case ExecuteType.ExecuteNonQuery:
-                        returnObject = cmd.ExecuteNonQuery();
-                        break;
-                    case ExecuteType.ExecuteScalar:
-                        returnObject = cmd.ExecuteScalar();
-                        break;
-                    default:
-                        break;
+                    conection.InfoMessage += new SqlInfoMessageEventHandler(OnSQLMessageInfo);
+
+                    if (_isAuditEnable)
+                    {
+                        ExecutionId = StartAuditing(procedureName, conection, sqlParams);
+                    }
+
+                    switch (executeType)
+                    {
+                        case ExecuteType.ExecuteReader:
+                            returnObject = cmd.ExecuteReader();
+                            break;
+                        case ExecuteType.ExecuteNonQuery:
+                            returnObject = cmd.ExecuteNonQuery();
+                            break;
+                        case ExecuteType.ExecuteScalar:
+                            returnObject = cmd.ExecuteScalar();
+                            break;
+                        default:
+                            break;
+                    }
                 }
+                if (_isAuditEnable)
+                {
+                    EndAuditing(ExecutionId, returnObject, _sqlConsoleMessage,true);
+                }
+            }
+            catch (Exception Ex) {
+
+                conection.InfoMessage += new SqlInfoMessageEventHandler(OnSQLMessageInfo);
+                EndAuditing(ExecutionId, Ex.Message, _sqlConsoleMessage,false);
             }
 
             return returnObject;
+        }
+
+        private void EndAuditing(long executionId, object returnObject, string sqlConsoleMessage, bool isSuccessful)
+        {
+            string jsonParameters = JsonConvert.SerializeObject(returnObject);
+
+            using (SqlConnection connection = new SqlConnection(GetAuditConnectionString()))
+            {
+                SqlCommand command = new SqlCommand
+                {
+                    Connection = connection,
+                    CommandText = "[database].[pa_UpdateExecutionLog]",
+                    CommandType = CommandType.StoredProcedure
+                };
+                command.Parameters.AddWithValue("@ExecutionId", executionId);
+                command.Parameters.AddWithValue("@ReturnObject", returnObject);
+                command.Parameters.AddWithValue("@SqlConsoleMessages", sqlConsoleMessage);
+                command.Parameters.AddWithValue("@ExecutionEndTime", DateTime.Now);
+                command.Parameters.AddWithValue("@IsSuccessful", isSuccessful);
+
+                connection.Open();
+                SqlDataReader rdr = command.ExecuteReader();
+                connection.Close();
+            }
+        }
+
+        private void OnSQLMessageInfo(object sender, SqlInfoMessageEventArgs e)
+        {
+            if (_isAuditEnable)
+            {
+                _sqlConsoleMessage = e.Message;
+                _sqlConsoleMessage += e.Errors;
+            }
+        }
+
+        private long StartAuditing(string procedureName, SqlConnection conection, SqlParameter[] sqlParams)
+        {
+            long executionId = -1;
+            using (SqlConnection connection = new SqlConnection(GetAuditConnectionString()))
+            {
+               
+                SqlCommand command = new SqlCommand
+                {
+                    Connection = connection,
+                    CommandText = "[database].[pa_AddDatabaseLog]",
+                    CommandType = CommandType.StoredProcedure
+                };
+                
+                List<Parameter> lParameters = new List<Parameter>();
+
+                foreach (SqlParameter param in sqlParams)
+                {
+                    Parameter p = new Parameter
+                    {
+                        Name = param.ParameterName,
+                        Type = param.DbType.ToString(),
+                        Value = param.Value?.ToString()
+                    };
+
+                    lParameters.Add(p);
+                }
+                string userID = WindowsIdentity.GetCurrent().Name;
+                //Get connectionInfo
+                string dbName = conection.Database;
+                string workstationId = conection.WorkstationId;
+                string datasource = conection.DataSource;
+                string jsonParameters = JsonConvert.SerializeObject(lParameters);
+
+                command.Parameters.AddWithValue("@Datasource", datasource);
+                command.Parameters.AddWithValue("@DatabaseName", dbName);
+                command.Parameters.AddWithValue("@Username", userID);
+                command.Parameters.AddWithValue("@StoreProcedureName", procedureName);
+                command.Parameters.AddWithValue("@workstationName", workstationId);
+                command.Parameters.AddWithValue("@Parameters", jsonParameters);
+                command.Parameters.AddWithValue("@ExecutionStartTime", DateTime.Now);
+
+                connection.Open();
+                SqlDataReader rdr = command.ExecuteReader();
+
+                if (rdr.Read())
+                {
+                    executionId = Convert.ToInt64(rdr["ExecutionId"].ToString());
+
+                }
+                connection.Close();
+
+            }
+            return executionId;
+        }
+
+        private string GetAuditConnectionString()
+        {
+            string connectionString = null;
+
+            connectionString = ConfigurationManager.AppSettings["ConnectionString.Auditoria"].ToString();
+
+
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                throw new ArgumentNullException("Connection String Auditoria no encontrada Key (ConnectionString.Auditoria) No encontrada.");
+            }
+            return connectionString;
         }
 
         /// <summary>
@@ -718,7 +865,7 @@ namespace DataMapper
             using (SqlConnection connection = new SqlConnection(getConnectionString()))
             {
                 connection.Open();
-                returnValue = (object)ExecuteProcedure(procedureName, ExecuteType.ExecuteScalar, connection, sqlParam);
+                returnValue = ExecuteProcedure(procedureName, ExecuteType.ExecuteScalar, connection, sqlParam);
             }
 
             return returnValue;
@@ -756,12 +903,16 @@ namespace DataMapper
             return connectionString;
         }
 
+
+
+
+
         /// <summary>
         /// Verifica si el campo es Identity en base de datos
         /// </summary>
         /// <param name="columnName"></param>
         /// <returns></returns>
-        private bool isIdentity(string columnName)
+        private bool IsIdentity(string columnName)
         {
             if (_identityColumn == "")
             {
@@ -899,7 +1050,7 @@ namespace DataMapper
         private String customAttributeFromProperty(PropertyInfo property)
         {
             string propiedad = property.ToString();
-         
+
             if (!_CustomAttributes.ContainsKey(propiedad))
             {
                 var customAttri = property.GetCustomAttributes(false);
@@ -950,7 +1101,7 @@ namespace DataMapper
             SqlParameter[] parameters = null;
             if (sqlParamsCollection != null)
             {
-               parameters = sqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
+                parameters = sqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
             }
             return ExecuteSelectSP(procedureName, parameters);
         }
