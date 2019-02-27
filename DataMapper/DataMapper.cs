@@ -23,7 +23,7 @@ namespace DataMapper
     /// </summary>
     public sealed class DataMapper<TEntity> : IRepository<TEntity> where TEntity : class
     {
-
+        private string _separator = "-----------------------------------------------------";
         private static Dictionary<string, bool> _primaryKeys = null;
         private static Dictionary<string, bool> _calculatedKeys = null;
         private static Dictionary<string, string> _CustomAttributes = null;
@@ -44,9 +44,10 @@ namespace DataMapper
 
         private static volatile DataMapper<TEntity> instancia;
 
-        private DataMapper() {
+        private DataMapper()
+        {
             string enableAuditDatabase = ConfigurationManager.AppSettings["Enable_Audit"].ToString();
-            this._isAuditEnable =  string.IsNullOrEmpty(enableAuditDatabase) ? true : Convert.ToBoolean(enableAuditDatabase);
+            _isAuditEnable = string.IsNullOrEmpty(enableAuditDatabase) ? true : Convert.ToBoolean(enableAuditDatabase);
         }
 
         /// <summary>
@@ -123,58 +124,68 @@ namespace DataMapper
                     _nombretabla = typeof(TEntity).Name;
                     using (SqlConnection con = new SqlConnection(ConnectionString))
                     {
-                        con.Open();
-                        _primaryKeys = new Dictionary<string, bool>();
-                        _calculatedKeys = new Dictionary<string, bool>();
-                        SqlCommand command = new SqlCommand("dbo.pa_Verificacion_Campos_Especiales", con)
+                        try
                         {
-                            CommandType = System.Data.CommandType.StoredProcedure
-                        };
-                        command.Parameters.AddWithValue("@Table_Name", _nombretabla);
-                        SqlDataReader propiedadesReader = command.ExecuteReader();
-                        if (propiedadesReader.HasRows)
-                        {
-                            while (propiedadesReader.Read())
+                            con.Open();
+                            _primaryKeys = new Dictionary<string, bool>();
+                            _calculatedKeys = new Dictionary<string, bool>();
+                            SqlCommand command = new SqlCommand("dbo.pa_Verificacion_Campos_Especiales", con)
                             {
-                                try
+                                CommandType = System.Data.CommandType.StoredProcedure
+                            };
+                            command.Parameters.AddWithValue("@Table_Name", _nombretabla);
+                            SqlDataReader propiedadesReader = command.ExecuteReader();
+                            if (propiedadesReader.HasRows)
+                            {
+                                while (propiedadesReader.Read())
                                 {
-
-                                    string key = propiedadesReader["NOMBRE_CAMPO"] == DBNull.Value ? "" : propiedadesReader["NOMBRE_CAMPO"].ToString();
-                                    string value = propiedadesReader["PROPIEDAD"] == DBNull.Value ? "" : propiedadesReader["PROPIEDAD"].ToString();
-
-                                    switch (value)
+                                    try
                                     {
-                                        case "PK":
-                                            if (!_primaryKeys.ContainsKey(key))
-                                            {
-                                                _primaryKeys.Add(key, true);
-                                            }
-                                            break;
 
-                                        case "IDENTITY":
-                                            _identityColumn = key;
-                                            break;
+                                        string key = propiedadesReader["NOMBRE_CAMPO"] == DBNull.Value ? "" : propiedadesReader["NOMBRE_CAMPO"].ToString();
+                                        string value = propiedadesReader["PROPIEDAD"] == DBNull.Value ? "" : propiedadesReader["PROPIEDAD"].ToString();
 
-                                        case "CALCULATE":
-                                            if (!_calculatedKeys.ContainsKey(key))
-                                            {
-                                                _calculatedKeys.Add(key, true);
-                                            }
-                                            break;
-                                        default:
-                                            break;
+                                        switch (value)
+                                        {
+                                            case "PK":
+                                                if (!_primaryKeys.ContainsKey(key))
+                                                {
+                                                    _primaryKeys.Add(key, true);
+                                                }
+                                                break;
+
+                                            case "IDENTITY":
+                                                _identityColumn = key;
+                                                break;
+
+                                            case "CALCULATE":
+                                                if (!_calculatedKeys.ContainsKey(key))
+                                                {
+                                                    _calculatedKeys.Add(key, true);
+                                                }
+                                                break;
+                                            default:
+                                                break;
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        throw new Exception("NOMBRE_CAMPO Y/O PROPIEDAD no definidas como columnas en el retorno del SP pa_Verificacion_Campos_Especiales.", ex);
                                     }
                                 }
-                                catch (Exception ex)
-                                {
-                                    throw new Exception("NOMBRE_CAMPO Y/O PROPIEDAD no definidas como columnas en el retorno del SP pa_Verificacion_Campos_Especiales.", ex);
-                                }
                             }
+                            if (_identityColumn == null) { _identityColumn = ""; }
+                            con.Close();
                         }
-                        if (_identityColumn == null) { _identityColumn = ""; }
-                        con.Close();
+                        catch (Exception ex)
+                        {
+                            StringBuilder sb = new StringBuilder();
+                            sb.AppendLine("---------- Error en permisos ----------");
+                            sb.AppendLine(ex.Message);
+                            sb.AppendLine(ex.ToString());
+                            throw new Exception(sb.ToString(), ex);
+                        }
                     }
-
                 }
             }
             catch (SqlException ExSQL)
@@ -683,10 +694,9 @@ namespace DataMapper
         /// <returns></returns>
         public object ExecuteProcedure(string procedureName, ExecuteType executeType, SqlConnection conection, params SqlParameter[] sqlParams)
         {
-           
+
             object returnObject = null;
             long ExecutionId = 0;
-            string SQLConsoleMessages;
 
             try
             {
@@ -738,13 +748,14 @@ namespace DataMapper
                 }
                 if (_isAuditEnable)
                 {
-                    EndAuditing(ExecutionId, returnObject, _sqlConsoleMessage,true);
+                    EndAuditing(ExecutionId, returnObject, _sqlConsoleMessage, true);
                 }
             }
-            catch (Exception Ex) {
+            catch (Exception Ex)
+            {
 
                 conection.InfoMessage += new SqlInfoMessageEventHandler(OnSQLMessageInfo);
-                EndAuditing(ExecutionId, Ex.Message, _sqlConsoleMessage,false);
+                EndAuditing(ExecutionId, Ex.Message, _sqlConsoleMessage, false);
             }
 
             return returnObject;
@@ -788,14 +799,14 @@ namespace DataMapper
             long executionId = -1;
             using (SqlConnection connection = new SqlConnection(GetAuditConnectionString()))
             {
-               
+
                 SqlCommand command = new SqlCommand
                 {
                     Connection = connection,
                     CommandText = "[database].[pa_AddDatabaseLog]",
                     CommandType = CommandType.StoredProcedure
                 };
-                
+
                 List<Parameter> lParameters = new List<Parameter>();
 
                 foreach (SqlParameter param in sqlParams)
