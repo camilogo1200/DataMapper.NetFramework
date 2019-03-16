@@ -1,6 +1,8 @@
 ﻿using DataMapper;
 using System;
+using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.Linq;
 
 namespace DataMapperPerformanceExec
 {
@@ -32,43 +34,28 @@ namespace DataMapperPerformanceExec
             //tercero = mapperter.ExecuteCreateSP<Terceros_NEG>(tercero, "paInsertaActualizaTercero_NEG", parameters);
 
 
-            DataMapper<AdmisionGiro_GIR> mapper = DataMapper<AdmisionGiro_GIR>.Instancia;
+            DataMapper<Conceptos_CAJ> mapper = DataMapper<Conceptos_CAJ>.Instancia;
 
-            AdmisionGiro_GIR Giros = new AdmisionGiro_GIR();
+            Conceptos_CAJ concepto = new Conceptos_CAJ
+            {
+                CreadoPor = -1,
+                CuentaContable = null,
+                Nombre = "Prueba DataMapper :-P",
+                IdServicio = 8,
+                IdCategoriaConcepto = 13
+            };
 
+            int IdConceptoPrincipal = 12;
 
-            Random r = new Random();
+            Conceptos_CAJ conceptso = mapper.ExecuteSelectSP("cajas.paObtenerDuplaConcepto", new SqlParameter("IdConcepto", IdConceptoPrincipal))?.ElementAt(0);
+            int? dupla = conceptso?.IdConcepto;
+            if (dupla == null || dupla == 0)
+            {
+                throw new Exception("No se a encontrado dupla para el concepto");
+            }
+            Console.WriteLine(Convert.ToInt32(dupla));
+            Console.ReadLine();
 
-            Giros.IdFacturaGiro = r.Next();
-            Giros.DigitoVerificacion = Convert.ToString(r.Next(1, 50));
-            Giros.IdEstadoGiro = 1;
-            Giros.FechaGrabacion = DateTime.Now;
-            Giros.DiaCreacion = short.Parse(DateTime.Now.Day.ToString());
-            Giros.MesCreacion = short.Parse(DateTime.Now.Month.ToString());
-            Giros.AnoCreacion = short.Parse(DateTime.Now.Year.ToString());
-            Giros.IdTransmisionTelefonica = 0;
-            Giros.AdmisionAutomatica = true;
-            Giros.IdCentroServicioOrigen = 1295;
-            Giros.IdCentroServicioDestino = 2664;
-            Giros.ValorGiro = 123456;
-            Giros.TarifaPorcPorte = 7500;
-            Giros.ValorPorte = 7500;
-            Giros.Observaciones = "pruebamapper";
-            Giros.IdRemitente = 8302002;
-            Giros.IdDestinatario = 8376097;
-            Giros.CreadoPor = 8302002;
-            Giros.IdTransmision = 1;
-            Giros.IdTelemercadeo = 1;
-            Giros.IdEstadoGiro = 1;
-            Giros.RutaDeclaracionOrigenes = "1";
-            Giros.IdTransmisionTelefonica = 1;
-            Giros.NombreDestinatario = "WILMER  PEÑUELA ESPINOSA";
-            Giros.NombreRemitente = "YEISON GUSTAVO ALBARRACIN MOLINA";
-            Giros.NumeroCelularDestinatario = "3164646464";
-            Giros.NumeroCelularRemitente = "3115262042";
-            Giros.Usuario = "YeisonGAlbarracinM";
-            SqlParameter[] parameters = mapper.createParametersFromEntity(Giros);
-            Giros = mapper.ExecuteCreateSP<AdmisionGiro_GIR>(Giros, "giros.paInsertarGiro", parameters);
         }
     }
 

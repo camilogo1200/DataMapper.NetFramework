@@ -756,6 +756,7 @@ namespace DataMapper
 
                 conection.InfoMessage += new SqlInfoMessageEventHandler(OnSQLMessageInfo);
                 EndAuditing(ExecutionId, Ex.Message, _sqlConsoleMessage, false);
+                throw new Exception(Ex.Message);
             }
 
             return returnObject;
@@ -774,13 +775,13 @@ namespace DataMapper
                     CommandType = CommandType.StoredProcedure
                 };
                 command.Parameters.AddWithValue("@ExecutionId", executionId);
-                command.Parameters.AddWithValue("@ReturnObject", returnObject);
+                command.Parameters.AddWithValue("@ReturnObject", jsonParameters);
                 command.Parameters.AddWithValue("@SqlConsoleMessages", sqlConsoleMessage);
                 command.Parameters.AddWithValue("@ExecutionEndTime", DateTime.Now);
                 command.Parameters.AddWithValue("@IsSuccessful", isSuccessful);
 
                 connection.Open();
-                SqlDataReader rdr = command.ExecuteReader();
+                int i = command.ExecuteNonQuery();
                 connection.Close();
             }
         }
