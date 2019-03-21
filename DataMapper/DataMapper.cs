@@ -46,7 +46,7 @@ namespace DataMapper
 
         private DataMapper()
         {
-            string enableAuditDatabase = ConfigurationManager.AppSettings["Enable_Audit"].ToString();
+            string enableAuditDatabase = ConfigurationManager.AppSettings["Enable_Audit"];
             _isAuditEnable = string.IsNullOrEmpty(enableAuditDatabase) ? true : Convert.ToBoolean(enableAuditDatabase);
         }
 
@@ -854,7 +854,7 @@ namespace DataMapper
         {
             string connectionString = null;
 
-            connectionString = ConfigurationManager.AppSettings["ConnectionString.Auditoria"].ToString();
+            connectionString = ConfigurationManager.AppSettings["ConnectionString.Auditoria"];
 
 
             if (string.IsNullOrEmpty(connectionString))
@@ -894,23 +894,26 @@ namespace DataMapper
         /// <returns></returns>
         private string getConnectionString()
         {
-            string ProjectStage = ConfigurationManager.AppSettings["PROJECT_STAGE"].ToString();
+            string projectStage = ConfigurationManager.AppSettings["PROJECT_STAGE"];
+            if (string.IsNullOrEmpty(projectStage)) {
+                throw new Exception("App Settings Key = [PROJECT_STAGE], No encontrada en web.config.");
+            }
             string connectionString = null;
-            switch (ProjectStage.ToUpper())
+            switch (projectStage.ToUpper())
             {
                 case "DESARROLLO":
-                    connectionString = ConfigurationManager.AppSettings["ConnectionString.Desarrollo"].ToString();
+                    connectionString = ConfigurationManager.AppSettings["ConnectionString.Desarrollo"];
                     break;
                 case "PRUEBAS":
-                    connectionString = ConfigurationManager.AppSettings["ConnectionString.Pruebas"].ToString();
+                    connectionString = ConfigurationManager.AppSettings["ConnectionString.Pruebas"];
                     break;
                 case "PRODUCCION":
-                    connectionString = ConfigurationManager.AppSettings["ConnectionString.Produccion"].ToString();
+                    connectionString = ConfigurationManager.AppSettings["ConnectionString.Produccion"];
                     break;
             }
             if (connectionString == null)
             {
-                throw new ArgumentNullException("Connection String no encontrada (PROJECT_STAGE) No encontrado" + ProjectStage);
+                throw new ArgumentNullException("Connection String no encontrada (PROJECT_STAGE) No encontrado" + projectStage);
             }
             return connectionString;
         }
