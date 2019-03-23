@@ -23,7 +23,7 @@ namespace DataMapper
     /// </summary>
     public sealed class DataMapper<TEntity> : IRepository<TEntity> where TEntity : class
     {
-        private string _separator = "-----------------------------------------------------";
+        private readonly string _separator = "-----------------------------------------------------";
         private static Dictionary<string, bool> _primaryKeys = null;
         private static Dictionary<string, bool> _calculatedKeys = null;
         private static Dictionary<string, string> _CustomAttributes = null;
@@ -63,7 +63,7 @@ namespace DataMapper
                     {
                         if (_connectionString == null)
                         {
-                            _connectionString = getConnectionString();
+                            _connectionString = GetConnectionString();
 
                         }
                     }
@@ -89,7 +89,7 @@ namespace DataMapper
                             instancia.CamposEspeciales();
                             //FIXME 
                             TEntity entity = (TEntity)Activator.CreateInstance(typeof(TEntity));
-                            instancia.buildInsertStatement(entity);
+                            instancia.BuildInsertStatement(entity);
 
                         }
                     }
@@ -170,7 +170,7 @@ namespace DataMapper
                                     }
                                     catch (Exception ex)
                                     {
-                                        throw new Exception("NOMBRE_CAMPO Y/O PROPIEDAD no definidas como columnas en el retorno del SP pa_Verificacion_Campos_Especiales.", ex);
+                                        throw new Exception("NOMBRE_CAMPO Y/O PROPIEDAD no definidas como columnas en el retorno del SP pa_Verificacion_Campos_Especiales. [" + con.Database + "] ", ex);
                                     }
                                 }
                             }
@@ -181,7 +181,7 @@ namespace DataMapper
                         {
                             StringBuilder sb = new StringBuilder();
                             sb.AppendLine("---------- Error en permisos ----------");
-                            sb.AppendLine(ex.Message);
+                            sb.AppendLine(ex.Message + "[" + con.Database + "] ");
                             sb.AppendLine(ex.ToString());
                             throw new Exception(sb.ToString(), ex);
                         }
@@ -202,7 +202,7 @@ namespace DataMapper
         /// </summary>
         /// <param name="entity"></param>
         /// <returns></returns>
-        private String buildInsertStatement(TEntity entity)
+        private String BuildInsertStatement(TEntity entity)
         {
             lock (syncRoot)
             {
@@ -219,7 +219,7 @@ namespace DataMapper
                     for (int i = 0; i < properties.Count; i++)
                     {
                         PropertyInfo property = properties.ElementAt(i);
-                        String prop = customAttributeFromProperty(property);
+                        String prop = CustomAttributeFromProperty(property);
                         if (!String.Equals(prop, property.Name))
                         {
                             if (!IsIdentity(prop) && !_calculatedKeys.ContainsKey(prop))
@@ -233,7 +233,7 @@ namespace DataMapper
                     for (int i = 0; i < properties.Count; i++)
                     {
                         PropertyInfo property = properties.ElementAt(i);
-                        String prop = customAttributeFromProperty(property);
+                        String prop = CustomAttributeFromProperty(property);
                         if (!IsIdentity(prop) && !_calculatedKeys.ContainsKey(prop))
                         {
                             _insertStatement += (i < properties.Count - 1) ? "@" + prop + ", " : "@" + prop;
@@ -254,13 +254,13 @@ namespace DataMapper
         /// <param name="entity"></param>
         /// <param name="connection"></param>
         /// <returns></returns>
-        private SqlCommand getInsertSqlCommand(TEntity entity, SqlConnection connection)
+        private SqlCommand GetInsertSqlCommand(TEntity entity, SqlConnection connection)
         {
             lock (syncRoot)
             {
                 if (_insertStatement == null)
                 {
-                    _insertStatement = buildInsertStatement(entity);
+                    _insertStatement = BuildInsertStatement(entity);
                 }
             }
             SqlCommand command = new SqlCommand(_insertStatement, connection);
@@ -270,7 +270,7 @@ namespace DataMapper
             for (int i = 0; i < properties.Count; i++)
             {
                 PropertyInfo property = properties.ElementAt(i);
-                String prop = customAttributeFromProperty(property);
+                String prop = CustomAttributeFromProperty(property);
                 if (String.Compare(_identityColumn, prop, StringComparison.InvariantCultureIgnoreCase) != 0)
                 {
                     Object value = property.GetValue(entity, null) ?? DBNull.Value;
@@ -297,11 +297,11 @@ namespace DataMapper
         public ICollection<TEntity> GetAll(string campoOrdenar = null, bool orderDesc = true)
         {
             ICollection<TEntity> lEntities = null;
-            using (SqlConnection con = new SqlConnection(getConnectionString()))
+            using (SqlConnection con = new SqlConnection(GetConnectionString()))
             {
                 if (String.IsNullOrEmpty(campoOrdenar))
                 {
-                    String pk = getPrimarykeys();
+                    String pk = GetPrimarykeys();
                     campoOrdenar = pk;
                 }
                 SqlDataReader reader = null;
@@ -312,7 +312,7 @@ namespace DataMapper
                 {
                     con.Open();
                     reader = command.ExecuteReader();
-                    lEntities = mapResultsToEntities(ref reader);
+                    lEntities = MapResultsToEntities(ref reader);
                 }
             }
             return lEntities;
@@ -331,16 +331,16 @@ namespace DataMapper
 
             using (SqlConnection connection = new SqlConnection(ConnectionString))
             {
-                using (SqlCommand command = getInsertSqlCommand(entity, connection))
+                using (SqlCommand command = GetInsertSqlCommand(entity, connection))
                 {
                     connection.Open();
                     object IdNumber = command.ExecuteScalar();
 
                     Type type = entity.GetType();
-                    String pk = getPrimarykeys();
+                    String pk = GetPrimarykeys();
                     if (IdNumber != null && !String.IsNullOrEmpty(IdNumber.ToString()))
                     {
-                        PropertyInfo property = propertyFromCustomAttribute(pk);
+                        PropertyInfo property = PropertyFromCustomAttribute(pk);
                         TypeConverter converter = TypeDescriptor.GetConverter(property.PropertyType);
                         var result = converter.ConvertFrom(IdNumber.ToString());
                         property.SetValue(entity, result, null);
@@ -363,14 +363,14 @@ namespace DataMapper
                 throw new ArgumentNullException(entity.GetType().ToString());
             }
             var properties = typeof(TEntity).GetProperties().ToList();
-            String pkey = getPrimarykeys();
+            String pkey = GetPrimarykeys();
 
             if (String.IsNullOrEmpty(pkey))
             {
                 throw new ArgumentNullException(pkey);
             }
 
-            PropertyInfo prop = propertyFromCustomAttribute(pkey);
+            PropertyInfo prop = PropertyFromCustomAttribute(pkey);
             int rowAfected = 0;
             String tableName = entity.GetType().Name;
             using (SqlConnection connection = new SqlConnection(ConnectionString))
@@ -397,7 +397,7 @@ namespace DataMapper
         {
             int rowAfected = 0;
             var properties = typeof(TEntity).GetProperties().ToList();
-            String pkey = getPrimarykeys();
+            String pkey = GetPrimarykeys();
 
             if (String.IsNullOrEmpty(pkey))
             {
@@ -409,7 +409,7 @@ namespace DataMapper
             SqlParameter[] sqlParams = new SqlParameter[properties.Count];
             SqlParameter param = null;
             // get identity key
-            PropertyInfo prop = propertyFromCustomAttribute(pkey);
+            PropertyInfo prop = PropertyFromCustomAttribute(pkey);
             // delete identity key
             properties.Remove(prop);
 
@@ -419,18 +419,18 @@ namespace DataMapper
             for (int i = 0; i < properties.Count; i++)
             {
                 PropertyInfo property = properties.ElementAt(i);
-                String field = customAttributeFromProperty(property);
+                String field = CustomAttributeFromProperty(property);
                 sqlStatement += field + " = " + ((i < properties.Count - 1) ? "@" + field + ", " : "@" + field);
                 param = new SqlParameter("@" + field, property.GetValue(entity) ?? DBNull.Value);
                 sqlParams[i] = param;
             }
 
-            String fieldWhere = customAttributeFromProperty(prop);
+            String fieldWhere = CustomAttributeFromProperty(prop);
             sqlStatement += " WHERE " + fieldWhere + " = @" + fieldWhere;
             param = new SqlParameter("@" + fieldWhere, prop.GetValue(entity, null));
             sqlParams[properties.Count] = param;
 
-            rowAfected = executeUpdate(sqlStatement, sqlParams);
+            rowAfected = ExecuteUpdate(sqlStatement, sqlParams);
 
             return (rowAfected > 0);
         }
@@ -441,7 +441,7 @@ namespace DataMapper
         /// <param name="sqlStatement"></param>
         /// <param name="sqlParams"></param>
         /// <returns></returns>
-        private int executeUpdate(String sqlStatement, SqlParameter[] sqlParams)
+        private int ExecuteUpdate(String sqlStatement, SqlParameter[] sqlParams)
         {
 
             int rowAfected = 0;
@@ -480,7 +480,7 @@ namespace DataMapper
                 PropertyInfo property = type.GetProperty(attribute);
 
                 String sqlSentence = null;
-                sqlSentence = buildFindSqlSentence(property, type, value, exacto);
+                sqlSentence = BuildFindSqlSentence(property, type, value, exacto);
                 if (campoOrdenar != null)
                 {
                     sqlSentence += " ORDER BY " + campoOrdenar;
@@ -490,7 +490,7 @@ namespace DataMapper
                 {
                     if (String.IsNullOrEmpty(campoOrdenar))
                     {
-                        String pkey = getPrimarykeys();
+                        String pkey = GetPrimarykeys();
                         campoOrdenar = pkey;
                         sqlSentence += " ORDER BY " + campoOrdenar;
                         sqlSentence += (orderDesc) ? " ASC; " : " DESC;";
@@ -516,7 +516,7 @@ namespace DataMapper
 
                     if (reader.HasRows)
                     {
-                        lEntities = mapResultsToEntities(ref reader);
+                        lEntities = MapResultsToEntities(ref reader);
                     }
                 }
                 con.Close();
@@ -558,13 +558,13 @@ namespace DataMapper
         /// <param name="property"></param>
         /// <param name="type"></param>
         /// <returns></returns>
-        private string buildFindSqlSentence(PropertyInfo property, Type type, String value = null, bool exacto = true)
+        private string BuildFindSqlSentence(PropertyInfo property, Type type, String value = null, bool exacto = true)
         {
 
             if (_findSQLSentence == null)
             {
                 String field = null;
-                field = customAttributeFromProperty(property);
+                field = CustomAttributeFromProperty(property);
                 _findSQLSentence = "SELECT * FROM " + type.Name + " WHERE " + field;
                 Type propertyType = property.PropertyType;
                 if (!exacto && propertyType.Equals(Type.GetType("System.String")))
@@ -592,7 +592,7 @@ namespace DataMapper
         public ICollection<TEntity> ExecuteSelectSP(string procedureName, params SqlParameter[] sqlParam)
         {
             ICollection<TEntity> lEntities = null;
-            String connectionSt = getConnectionString();
+            String connectionSt = GetConnectionString();
             using (SqlConnection connection = new SqlConnection(connectionSt))
             {
                 connection.Open();
@@ -600,7 +600,7 @@ namespace DataMapper
 
                 if (reader.HasRows)
                 {
-                    lEntities = mapResultsToEntities(ref reader);
+                    lEntities = MapResultsToEntities(ref reader);
                 }
                 reader.Close();
             }
@@ -617,15 +617,15 @@ namespace DataMapper
         public TEntityObject ExecuteCreateSP<TEntityObject>(TEntityObject entity, string procedureName, params SqlParameter[] sqlParam)
         {
 
-            String pk = getPrimarykeys();
+            String pk = GetPrimarykeys();
 
-            using (SqlConnection connection = new SqlConnection(getConnectionString()))
+            using (SqlConnection connection = new SqlConnection(GetConnectionString()))
             {
                 connection.Open();
                 //Set Object Id
                 Type type = entity.GetType();
 
-                PropertyInfo property = propertyFromCustomAttribute(pk);
+                PropertyInfo property = PropertyFromCustomAttribute(pk);
                 TypeConverter converter = TypeDescriptor.GetConverter(property.PropertyType);
                 string valorIn = property.GetValue(entity)?.ToString();
                 string Ident = ExecuteProcedure(procedureName, ExecuteType.ExecuteScalar, connection, sqlParam)?.ToString();
@@ -638,7 +638,7 @@ namespace DataMapper
             }
         }
 
-        private string getPrimarykeys()
+        private string GetPrimarykeys()
         {
             if (_primaryKeys.Count == 0)
             {
@@ -657,7 +657,7 @@ namespace DataMapper
         {
             int returnValue;
 
-            using (SqlConnection connection = new SqlConnection(getConnectionString()))
+            using (SqlConnection connection = new SqlConnection(GetConnectionString()))
             {
                 connection.Open();
                 returnValue = (int)ExecuteProcedure(procedureName, ExecuteType.ExecuteNonQuery, connection, sqlParam);
@@ -755,8 +755,8 @@ namespace DataMapper
             {
 
                 conection.InfoMessage += new SqlInfoMessageEventHandler(OnSQLMessageInfo);
-                EndAuditing(ExecutionId, Ex.Message, _sqlConsoleMessage, false);
-                throw new Exception(Ex.Message);
+                EndAuditing(ExecutionId, Ex.Message + " ["+conection.Database+"] ", _sqlConsoleMessage, false);
+                throw new Exception(Ex.Message + " [" + conection.Database + "] ");
             }
 
             return returnObject;
@@ -764,7 +764,12 @@ namespace DataMapper
 
         private void EndAuditing(long executionId, object returnObject, string sqlConsoleMessage, bool isSuccessful)
         {
-            string jsonParameters = JsonConvert.SerializeObject(returnObject);
+            string jsonParameters = null;
+            jsonParameters = JsonConvert.SerializeObject(returnObject);
+
+            if (jsonParameters == null) {
+                jsonParameters = "No existe retorno en ejecucion del procedimiento. (NULL)";
+            }
 
             using (SqlConnection connection = new SqlConnection(GetAuditConnectionString()))
             {
@@ -801,51 +806,62 @@ namespace DataMapper
             using (SqlConnection connection = new SqlConnection(GetAuditConnectionString()))
             {
 
-                SqlCommand command = new SqlCommand
+                using (SqlCommand command = new SqlCommand
                 {
                     Connection = connection,
                     CommandText = "[database].[pa_AddDatabaseLog]",
                     CommandType = CommandType.StoredProcedure
-                };
-
-                List<Parameter> lParameters = new List<Parameter>();
-
-                foreach (SqlParameter param in sqlParams)
+                })
                 {
-                    Parameter p = new Parameter
+                    List<Parameter> lParameters = new List<Parameter>();
+                    if (sqlParams != null && sqlParams.Count() > 0)
                     {
-                        Name = param.ParameterName,
-                        Type = param.DbType.ToString(),
-                        Value = param.Value?.ToString()
-                    };
 
-                    lParameters.Add(p);
+
+                        foreach (SqlParameter param in sqlParams)
+                        {
+                            Parameter p = new Parameter
+                            {
+                                Name = param.ParameterName,
+                                Type = param.DbType.ToString(),
+                                Value = param.Value?.ToString()
+                            };
+
+                            lParameters.Add(p);
+                        }
+                    }
+                    string userID = WindowsIdentity.GetCurrent().Name;
+                    string jsonParameters = null;
+                    //Get connectionInfo
+                    string dbName = conection.Database;
+                    string workstationId = conection.WorkstationId;
+                    string datasource = conection.DataSource;
+                    if (lParameters != null && lParameters.Count() > 0)
+                    {
+                        jsonParameters = JsonConvert.SerializeObject(lParameters);
+                    }
+                    else {
+                        jsonParameters = procedureName + " - No contiene parametros de entrada."; 
+                    }
+
+                    command.Parameters.AddWithValue("@Datasource", datasource);
+                    command.Parameters.AddWithValue("@DatabaseName", dbName);
+                    command.Parameters.AddWithValue("@Username", userID);
+                    command.Parameters.AddWithValue("@StoreProcedureName", procedureName);
+                    command.Parameters.AddWithValue("@workstationName", workstationId);
+                    command.Parameters.AddWithValue("@Parameters", jsonParameters);
+                    command.Parameters.AddWithValue("@ExecutionStartTime", DateTime.Now);
+
+                    connection.Open();
+                    SqlDataReader rdr = command.ExecuteReader();
+
+                    if (rdr.Read())
+                    {
+                        executionId = Convert.ToInt64(rdr["ExecutionId"].ToString());
+
+                    }
+                    connection.Close();
                 }
-                string userID = WindowsIdentity.GetCurrent().Name;
-                //Get connectionInfo
-                string dbName = conection.Database;
-                string workstationId = conection.WorkstationId;
-                string datasource = conection.DataSource;
-                string jsonParameters = JsonConvert.SerializeObject(lParameters);
-
-                command.Parameters.AddWithValue("@Datasource", datasource);
-                command.Parameters.AddWithValue("@DatabaseName", dbName);
-                command.Parameters.AddWithValue("@Username", userID);
-                command.Parameters.AddWithValue("@StoreProcedureName", procedureName);
-                command.Parameters.AddWithValue("@workstationName", workstationId);
-                command.Parameters.AddWithValue("@Parameters", jsonParameters);
-                command.Parameters.AddWithValue("@ExecutionStartTime", DateTime.Now);
-
-                connection.Open();
-                SqlDataReader rdr = command.ExecuteReader();
-
-                if (rdr.Read())
-                {
-                    executionId = Convert.ToInt64(rdr["ExecutionId"].ToString());
-
-                }
-                connection.Close();
-
             }
             return executionId;
         }
@@ -874,7 +890,7 @@ namespace DataMapper
         {
             object returnValue;
 
-            using (SqlConnection connection = new SqlConnection(getConnectionString()))
+            using (SqlConnection connection = new SqlConnection(GetConnectionString()))
             {
                 connection.Open();
                 returnValue = ExecuteProcedure(procedureName, ExecuteType.ExecuteScalar, connection, sqlParam);
@@ -892,10 +908,11 @@ namespace DataMapper
         /// Obtiene la cadena de conexion parametrizada
         /// </summary>
         /// <returns></returns>
-        private string getConnectionString()
+        private string GetConnectionString()
         {
             string projectStage = ConfigurationManager.AppSettings["PROJECT_STAGE"];
-            if (string.IsNullOrEmpty(projectStage)) {
+            if (string.IsNullOrEmpty(projectStage))
+            {
                 throw new Exception("App Settings Key = [PROJECT_STAGE], No encontrada en web.config.");
             }
             string connectionString = null;
@@ -941,7 +958,7 @@ namespace DataMapper
         /// </summary>
         /// <param name="reader"></param>
         /// <returns></returns>
-        private ICollection<TEntity> mapResultsToEntities(ref SqlDataReader reader)
+        private ICollection<TEntity> MapResultsToEntities(ref SqlDataReader reader)
         {
             ICollection<TEntity> lEntities = new Collection<TEntity>();
             while (reader.Read())
@@ -970,7 +987,7 @@ namespace DataMapper
             {
 
                 String attributeName = reader.GetName(i);
-                PropertyInfo attr = propertyFromCustomAttribute(attributeName);
+                PropertyInfo attr = PropertyFromCustomAttribute(attributeName);
                 if (attr != null)
                 {
                     Type dataType = reader.GetFieldType(i);
@@ -1038,7 +1055,7 @@ namespace DataMapper
         /// </summary>
         /// <param name="customAttribute"></param>
         /// <returns></returns>
-        private PropertyInfo propertyFromCustomAttribute(String customAttribute)
+        private PropertyInfo PropertyFromCustomAttribute(String customAttribute)
         {
             PropertyInfo attr = null;
             var properties = typeof(TEntity).GetProperties()
@@ -1062,7 +1079,7 @@ namespace DataMapper
         /// </summary>
         /// <param name="property"></param>
         /// <returns></returns>
-        private String customAttributeFromProperty(PropertyInfo property)
+        private string CustomAttributeFromProperty(PropertyInfo property)
         {
             string propiedad = property.ToString();
 
@@ -1085,7 +1102,7 @@ namespace DataMapper
         /// </summary>
         /// <param name="entityValues"></param>
         /// <returns></returns>
-        public SqlParameter[] createParametersFromEntity(TEntity entityValues)
+        public SqlParameter[] CreateParametersFromEntity(TEntity entityValues)
         {
             SqlParameter[] sqlParams = null;
             SqlParameter param = null;
@@ -1101,7 +1118,7 @@ namespace DataMapper
             {
                 param = new SqlParameter();
                 property = properties.ElementAt(i);
-                param.ParameterName = customAttributeFromProperty(property);
+                param.ParameterName = CustomAttributeFromProperty(property);
                 param.Value = property.GetValue(entityValues);
                 sqlParams[i] = param;
             }
@@ -1116,38 +1133,38 @@ namespace DataMapper
             SqlParameter[] parameters = null;
             if (sqlParamsCollection != null)
             {
-                parameters = sqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
+                parameters = SqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
             }
             return ExecuteSelectSP(procedureName, parameters);
         }
 
         public TEntityObject ExecuteCreateSP<TEntityObject>(TEntityObject entity, string procedureName, SqlParameterCollection sqlParamsCollection)
         {
-            SqlParameter[] parameters = sqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
+            SqlParameter[] parameters = SqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
             return ExecuteCreateSP<TEntityObject>(entity, procedureName, parameters);
         }
 
         public int ExecuteNonQuerySP(string procedureName, SqlParameterCollection sqlParamsCollection)
         {
-            SqlParameter[] parameters = sqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
+            SqlParameter[] parameters = SqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
             return ExecuteNonQuerySP(procedureName, parameters);
         }
 
         public object ExecuteGeneralSP(string procedureName, SqlParameterCollection sqlParamsCollection)
         {
-            SqlParameter[] parameters = sqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
+            SqlParameter[] parameters = SqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
             return ExecuteGeneralSP(procedureName, parameters);
         }
         public object ExecuteProcedure(string procedureName, ExecuteType executeType, SqlParameterCollection sqlParamsCollection)
         {
-            SqlParameter[] parameters = sqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
+            SqlParameter[] parameters = SqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
             return ExecuteProcedure(procedureName, executeType, parameters);
         }
 
         #endregion
 
         #region Utils
-        private static SqlParameter[] sqlParameterCollectionToSqlParameterArray(SqlParameterCollection sqlParamsCollection)
+        private static SqlParameter[] SqlParameterCollectionToSqlParameterArray(SqlParameterCollection sqlParamsCollection)
         {
             SqlParameter[] parameters = new SqlParameter[sqlParamsCollection.Count];
 
