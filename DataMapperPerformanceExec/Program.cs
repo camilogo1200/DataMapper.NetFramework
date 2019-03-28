@@ -34,31 +34,36 @@ namespace DataMapperPerformanceExec
                 //tercero.FechaGrabacion = DateTime.Now;
                 //SqlParameter[] parameters = mapperter.createParametersFromEntity(tercero);
                 //tercero = mapperter.ExecuteCreateSP<Terceros_NEG>(tercero, "paInsertaActualizaTercero_NEG", parameters);
-                DataMapper<CentroServicios_NEG> mapper = null;
+                DataMapper<MediosDePago_CAJ> mapper = DataMapper<MediosDePago_CAJ>.Instancia; ;
                 //mapper = DataMapper<CentroServicios_NEG>.Instancia;
                 //ICollection<CentroServicios_NEG> lcentrosServicio = mapper.ExecuteSelectSP("negocio.paObtenerHorariosCentrosServicio");
-
-                DataMapper<Conceptos_CAJ> mapper2 = DataMapper<Conceptos_CAJ>.Instancia;
-
-                Conceptos_CAJ concepto = new Conceptos_CAJ
+                ICollection<MediosDePago_CAJ> lMediosPago = mapper.ExecuteSelectSP("cajas.paObtenerMediosPago");
+                if (lMediosPago == null || lMediosPago.Count < 1)
                 {
-                    CreadoPor = -1,
-                    CuentaContable = null,
-                    Nombre = "Prueba DataMapper :-P",
-                    IdServicio = 8,
-                    IdCategoriaConcepto = 13
-                };
-
-                int IdConceptoPrincipal = 12;
-
-                Conceptos_CAJ conceptso = mapper2.ExecuteSelectSP("cajas.paObtenerDuplaConcepto", new SqlParameter("IdConcepto", IdConceptoPrincipal))?.ElementAt(0);
-
-                int? dupla = conceptso?.IdConcepto;
-                if (dupla == null || dupla == 0)
-                {
-                    throw new Exception("No se a encontrado dupla para el concepto");
+                    throw new Exception("Medios de pago no disponibles en cajas.");
                 }
-                Console.WriteLine(Convert.ToInt32(dupla));
+
+                //DataMapper<Conceptos_CAJ> mapper2 = DataMapper<Conceptos_CAJ>.Instancia;
+
+                //Conceptos_CAJ concepto = new Conceptos_CAJ
+                //{
+                //    CreadoPor = -1,
+                //    CuentaContable = null,
+                //    Nombre = "Prueba DataMapper :-P",
+                //    IdServicio = 8,
+                //    IdCategoriaConcepto = 13
+                //};
+
+                //int IdConceptoPrincipal = 12;
+
+                //Conceptos_CAJ conceptso = mapper2.ExecuteSelectSP("cajas.paObtenerDuplaConcepto", new SqlParameter("IdConcepto", IdConceptoPrincipal))?.ElementAt(0);
+
+                //int? dupla = conceptso?.IdConcepto;
+                //if (dupla == null || dupla == 0)
+                //{
+                //    throw new Exception("No se a encontrado dupla para el concepto");
+                //}
+                //Console.WriteLine(Convert.ToInt32(dupla));
                 Console.ReadLine();
             }
             catch (Exception EX) {

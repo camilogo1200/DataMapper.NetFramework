@@ -77,6 +77,7 @@
     <Compile Include="AdmisionGiro_GIR.cs" />
     <Compile Include="CentroServicios_NEG.cs" />
     <Compile Include="Conceptos_CAJ.cs" />
+    <Compile Include="MediosDePago_CAJ.cs" />
     <Compile Include="ParametrosGiros_GIR.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

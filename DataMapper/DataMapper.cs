@@ -724,7 +724,7 @@ namespace DataMapper
                         }
                     }
 
-                    conection.InfoMessage += new SqlInfoMessageEventHandler(OnSQLMessageInfo);
+                    //conection.InfoMessage += new SqlInfoMessageEventHandler(OnSQLMessageInfo);
 
                     if (_isAuditEnable)
                     {
@@ -748,13 +748,13 @@ namespace DataMapper
                 }
                 if (_isAuditEnable)
                 {
-                    EndAuditing(ExecutionId, returnObject, _sqlConsoleMessage, true);
+                   EndAuditing(ExecutionId, returnObject, _sqlConsoleMessage, true);
                 }
             }
             catch (Exception Ex)
             {
 
-                conection.InfoMessage += new SqlInfoMessageEventHandler(OnSQLMessageInfo);
+                //conection.InfoMessage += new SqlInfoMessageEventHandler(OnSQLMessageInfo);
                 EndAuditing(ExecutionId, Ex.Message + " ["+conection.Database+"] ", _sqlConsoleMessage, false);
                 throw new Exception(Ex.Message + " [" + conection.Database + "] ");
             }
@@ -765,7 +765,7 @@ namespace DataMapper
         private void EndAuditing(long executionId, object returnObject, string sqlConsoleMessage, bool isSuccessful)
         {
             string jsonParameters = null;
-            jsonParameters = JsonConvert.SerializeObject(returnObject);
+            //jsonParameters = JsonConvert.SerializeObject(returnObject);
 
             if (jsonParameters == null) {
                 jsonParameters = "No existe retorno en ejecucion del procedimiento. (NULL)";
