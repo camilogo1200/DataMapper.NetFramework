@@ -1,20 +1,15 @@
-﻿using CentroServicios;
-using DataMapper;
+﻿using DataMapper;
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
-using System.Linq;
 
 namespace DataMapperPerformanceExec
 {
-    class Program
+    internal class Program
     {
-
-        static void Main(String[] args)
+        private static void Main(String[] args)
         {
             try
             {
-
                 //DataMapper<Terceros_NEG> mapperter = DataMapper<Terceros_NEG>.Instancia;
 
                 //Terceros_NEG tercero = new Terceros_NEG();
@@ -66,11 +61,11 @@ namespace DataMapperPerformanceExec
                 //Console.WriteLine(Convert.ToInt32(dupla));
                 Console.ReadLine();
             }
-            catch (Exception EX) {
+            catch (Exception EX)
+            {
                 Console.WriteLine(EX.Message);
                 Console.ReadLine();
             }
         }
     }
-
 }

@@ -17,28 +17,27 @@ using System.Text;
 
 namespace DataMapper
 {
-
     /// <summary>
     /// Mapea los datareader a las entidades o inserta en la base de datos.
     /// </summary>
     public sealed class DataMapper<TEntity> : IRepository<TEntity> where TEntity : class
     {
-        private readonly string _separator = "-----------------------------------------------------";
-        private static Dictionary<string, bool> _primaryKeys = null;
         private static Dictionary<string, bool> _calculatedKeys = null;
         private static Dictionary<string, string> _CustomAttributes = null;
-        String _nombretabla = null;
-
-        private String _identityColumn = null;
-        private String _connectionString = null;
-        private String _findSQLSentence = null;
-        private String _insertStatement = null;
-        private String _countSentence = null;
+        private static Dictionary<string, bool> _primaryKeys = null;
 
         /// <summary>
         /// Atributo utilizado para evitar problemas con multithreading en el singleton.
         /// </summary>
         private static object syncRoot = new Object();
+
+        private readonly string _separator = "-----------------------------------------------------";
+        private String _connectionString = null;
+        private String _countSentence = null;
+        private String _findSQLSentence = null;
+        private String _identityColumn = null;
+        private String _insertStatement = null;
+        private String _nombretabla = null;
 
         #region Crear instancia
 
@@ -49,6 +48,33 @@ namespace DataMapper
             string enableAuditDatabase = ConfigurationManager.AppSettings["Enable_Audit"];
             _isAuditEnable = string.IsNullOrEmpty(enableAuditDatabase) ? true : Convert.ToBoolean(enableAuditDatabase);
         }
+
+        public static DataMapper<TEntity> Instancia
+        {
+            get
+            {
+                if (instancia == null)
+                {
+                    lock (syncRoot)
+                    {
+                        if (instancia == null)
+                        {
+                            instancia = new DataMapper<TEntity>();
+                            _CustomAttributes = new Dictionary<string, string>();
+                            instancia.CamposEspeciales();
+                            //FIXME
+                            TEntity entity = (TEntity)Activator.CreateInstance(typeof(TEntity));
+                            instancia.BuildInsertStatement(entity);
+                        }
+                    }
+                }
+                return instancia;
+            }
+        }
+
+        public bool _isAuditEnable { get; set; }
+
+        public string _sqlConsoleMessage { get; set; }
 
         /// <summary>
         /// Cadena de Conexión a la BD
@@ -64,7 +90,6 @@ namespace DataMapper
                         if (_connectionString == null)
                         {
                             _connectionString = GetConnectionString();
-
                         }
                     }
                 }
@@ -72,48 +97,63 @@ namespace DataMapper
             }
         }
 
-        public static DataMapper<TEntity> Instancia
-        {
-            get
-            {
-                if (instancia == null)
-                {
-
-                    lock (syncRoot)
-                    {
-                        if (instancia == null)
-                        {
-
-                            instancia = new DataMapper<TEntity>();
-                            _CustomAttributes = new Dictionary<string, string>();
-                            instancia.CamposEspeciales();
-                            //FIXME 
-                            TEntity entity = (TEntity)Activator.CreateInstance(typeof(TEntity));
-                            instancia.BuildInsertStatement(entity);
-
-                        }
-                    }
-                }
-                return instancia;
-            }
-        }
-
-        public bool _isAuditEnable { get; set; }
-        public string _sqlConsoleMessage { get; set; }
-
-        #endregion
-
+        #endregion Crear instancia
 
         #region Metodos
 
-
         #region ADO insert statements
 
+        /// <summary>
+        /// Crea la consulta para realizar la insercion de un registro
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        private String BuildInsertStatement(TEntity entity)
+        {
+            lock (syncRoot)
+            {
+                if (_insertStatement == null)
+                {
+                    //Build the SQL Statement
+                    Type type = entity.GetType();
+                    String tableName = entity.GetType().Name;
+                    _insertStatement = "INSERT INTO " + tableName + " ( ";
+                    //retrieve object properties
+                    List<PropertyInfo> properties = entity.GetType().GetProperties().ToList();
 
+                    for (int i = 0; i < properties.Count; i++)
+                    {
+                        PropertyInfo property = properties.ElementAt(i);
+                        String prop = CustomAttributeFromProperty(property);
+                        if (!String.Equals(prop, property.Name))
+                        {
+                            if (!IsIdentity(prop) && !_calculatedKeys.ContainsKey(prop))
+                            {
+                                _insertStatement += (i < properties.Count - 1) ? prop + ", " : prop;
+                            }
+                        }
+                    }
+                    _insertStatement += " )" + " VALUES (";
+                    //Avoid security issues using parameters
+                    for (int i = 0; i < properties.Count; i++)
+                    {
+                        PropertyInfo property = properties.ElementAt(i);
+                        String prop = CustomAttributeFromProperty(property);
+                        if (!IsIdentity(prop) && !_calculatedKeys.ContainsKey(prop))
+                        {
+                            _insertStatement += (i < properties.Count - 1) ? "@" + prop + ", " : "@" + prop;
+                        }
+                    }
+                    _insertStatement += "); SELECT SCOPE_IDENTITY();";
+                }
+            }
+
+            return _insertStatement;
+        }
 
         /// <summary>
-        /// Metodo que Verifica cuales campos son calculados, Identity y cual es PK para asi 
-        /// excluir los calculados y los identity de las inserciones y guardar la PK en una Variable.
+        /// Metodo que Verifica cuales campos son calculados, Identity y cual es PK para asi excluir
+        /// los calculados y los identity de las inserciones y guardar la PK en una Variable.
         /// </summary>
         private void CamposEspeciales()
         {
@@ -141,7 +181,6 @@ namespace DataMapper
                                 {
                                     try
                                     {
-
                                         string key = propiedadesReader["NOMBRE_CAMPO"] == DBNull.Value ? "" : propiedadesReader["NOMBRE_CAMPO"].ToString();
                                         string value = propiedadesReader["PROPIEDAD"] == DBNull.Value ? "" : propiedadesReader["PROPIEDAD"].ToString();
 
@@ -164,6 +203,7 @@ namespace DataMapper
                                                     _calculatedKeys.Add(key, true);
                                                 }
                                                 break;
+
                                             default:
                                                 break;
                                         }
@@ -198,57 +238,6 @@ namespace DataMapper
         }
 
         /// <summary>
-        /// Crea la consulta para realizar la insercion de un registro
-        /// </summary>
-        /// <param name="entity"></param>
-        /// <returns></returns>
-        private String BuildInsertStatement(TEntity entity)
-        {
-            lock (syncRoot)
-            {
-
-                if (_insertStatement == null)
-                {
-                    //Build the SQL Statement     
-                    Type type = entity.GetType();
-                    String tableName = entity.GetType().Name;
-                    _insertStatement = "INSERT INTO " + tableName + " ( ";
-                    //retrieve object properties
-                    List<PropertyInfo> properties = entity.GetType().GetProperties().ToList();
-
-                    for (int i = 0; i < properties.Count; i++)
-                    {
-                        PropertyInfo property = properties.ElementAt(i);
-                        String prop = CustomAttributeFromProperty(property);
-                        if (!String.Equals(prop, property.Name))
-                        {
-                            if (!IsIdentity(prop) && !_calculatedKeys.ContainsKey(prop))
-                            {
-                                _insertStatement += (i < properties.Count - 1) ? prop + ", " : prop;
-                            }
-                        }
-                    }
-                    _insertStatement += " )" + " VALUES (";
-                    //Avoid security issues using parameters
-                    for (int i = 0; i < properties.Count; i++)
-                    {
-                        PropertyInfo property = properties.ElementAt(i);
-                        String prop = CustomAttributeFromProperty(property);
-                        if (!IsIdentity(prop) && !_calculatedKeys.ContainsKey(prop))
-                        {
-                            _insertStatement += (i < properties.Count - 1) ? "@" + prop + ", " : "@" + prop;
-                        }
-                    }
-                    _insertStatement += "); SELECT SCOPE_IDENTITY();";
-                }
-            }
-
-
-            return _insertStatement;
-
-        }
-
-        /// <summary>
         /// Crea la consulta y realiza la insercion de un registro
         /// </summary>
         /// <param name="entity"></param>
@@ -276,7 +265,6 @@ namespace DataMapper
                     Object value = property.GetValue(entity, null) ?? DBNull.Value;
                     SqlParameter parameter = new SqlParameter("@" + prop, value);
                     command.Parameters.Add(parameter);
-
                 }
             }
             //command.CommandType = CommandType.StoredProcedure;
@@ -284,38 +272,34 @@ namespace DataMapper
 
             return command;
         }
-        #endregion
+
+        #endregion ADO insert statements
 
         #region Ejecucion consultas dinamicas
 
         /// <summary>
-        /// Obtiene Tos los campos de una tabla
+        /// Consulta la cantidad de entidades en la BD
         /// </summary>
-        /// <param name="campoOrdenar">OPCIONAL(String nombre del campo por el cual se desea ordenar el resultado de la consulta.)</param>
-        /// <param name="orderDesc">OPCIONAL(Bool true por defecto para seleccionar si se ordena de manera descendente =true o ascendente=false.)</param>
-        /// <returns></returns>
-        public ICollection<TEntity> GetAll(string campoOrdenar = null, bool orderDesc = true)
+        /// <returns>Numero de entidades con persistencia en BD</returns>
+        public long Count()
         {
-            ICollection<TEntity> lEntities = null;
-            using (SqlConnection con = new SqlConnection(GetConnectionString()))
+            Type type = GetType().GenericTypeArguments[0];
+            Object rowsST;
+            if (_countSentence == null)
             {
-                if (String.IsNullOrEmpty(campoOrdenar))
+                _countSentence = "SELECT COUNT(*) FROM " + type.Name + ";";
+            }
+
+            using (SqlConnection con = new SqlConnection(ConnectionString))
+            {
+                using (SqlCommand command = new SqlCommand(_countSentence, con))
                 {
-                    String pk = GetPrimarykeys();
-                    campoOrdenar = pk;
-                }
-                SqlDataReader reader = null;
-                Type type = GetType().GenericTypeArguments[0];
-                String sqlSentece = "SELECT  * FROM " + type.Name + " ORDER BY " + campoOrdenar;
-                sqlSentece += (orderDesc) ? " ASC; " : " DESC;";
-                using (SqlCommand command = new SqlCommand(sqlSentece, con))
-                {
+                    command.CommandType = CommandType.Text;
                     con.Open();
-                    reader = command.ExecuteReader();
-                    lEntities = MapResultsToEntities(ref reader);
+                    rowsST = command.ExecuteScalar();
                 }
             }
-            return lEntities;
+            return (rowsST == null) ? 0 : Int64.Parse(rowsST.ToString());
         }
 
         /// <summary>
@@ -347,10 +331,7 @@ namespace DataMapper
                     }
                 }
             }
-
         }
-
-
 
         /// <summary>
         /// Elimina un registro de acuerdo a la entidad y llave primaria
@@ -386,89 +367,19 @@ namespace DataMapper
             return (rowAfected > 0) ? true : false;
         }
 
-
-        /// <summary>
-        /// Actualiza un registro en la base de datos dependiendo 
-        /// de la entidad de entrada y llave primaia.
-        /// </summary>
-        /// <param name="entity"></param>
-        /// <returns></returns>
-        public bool Update(TEntity entity)
-        {
-            int rowAfected = 0;
-            var properties = typeof(TEntity).GetProperties().ToList();
-            String pkey = GetPrimarykeys();
-
-            if (String.IsNullOrEmpty(pkey))
-            {
-                throw new ArgumentNullException(pkey);
-            }
-
-            properties = properties.Where(p => p.GetValue(entity) != null).ToList();
-
-            SqlParameter[] sqlParams = new SqlParameter[properties.Count];
-            SqlParameter param = null;
-            // get identity key
-            PropertyInfo prop = PropertyFromCustomAttribute(pkey);
-            // delete identity key
-            properties.Remove(prop);
-
-            String sqlStatement = "UPDATE " + entity.GetType().Name + " SET ";
-
-            // set sqlparameters and query
-            for (int i = 0; i < properties.Count; i++)
-            {
-                PropertyInfo property = properties.ElementAt(i);
-                String field = CustomAttributeFromProperty(property);
-                sqlStatement += field + " = " + ((i < properties.Count - 1) ? "@" + field + ", " : "@" + field);
-                param = new SqlParameter("@" + field, property.GetValue(entity) ?? DBNull.Value);
-                sqlParams[i] = param;
-            }
-
-            String fieldWhere = CustomAttributeFromProperty(prop);
-            sqlStatement += " WHERE " + fieldWhere + " = @" + fieldWhere;
-            param = new SqlParameter("@" + fieldWhere, prop.GetValue(entity, null));
-            sqlParams[properties.Count] = param;
-
-            rowAfected = ExecuteUpdate(sqlStatement, sqlParams);
-
-            return (rowAfected > 0);
-        }
-
-        /// <summary>
-        /// Ejecuta el query de actualizacion
-        /// </summary>
-        /// <param name="sqlStatement"></param>
-        /// <param name="sqlParams"></param>
-        /// <returns></returns>
-        private int ExecuteUpdate(String sqlStatement, SqlParameter[] sqlParams)
-        {
-
-            int rowAfected = 0;
-            using (SqlConnection connection = new SqlConnection(ConnectionString))
-            {
-                SqlCommand command = new SqlCommand(sqlStatement, connection);
-                {
-                    connection.Open();
-                    if (sqlParams != null && sqlParams.Length > 0)
-                        command.Parameters.AddRange(sqlParams);
-                    rowAfected = command.ExecuteNonQuery();
-                    command.Dispose();
-                }
-            }
-            return rowAfected;
-        }
-
-
-
         /// <summary>
         /// Encuentra una entidad a partir de un valor y el nombre del atributo en la entidad.
         /// </summary>
         /// <param name="value">Valor del campo en la BD</param>
         /// <param name="attribute">Nombre de la propiedad (Columna) BD</param>
         /// <param name="exacto">indica si el valor a consultar es exacto</param>
-        /// <param name="campoOrdenar">OPCIONAL(String nombre del campo por el cual se desea ordenar el resultado de la consulta.)</param>
-        /// <param name="orderDesc">OPCIONAL(Bool true por defecto para seleccionar si se ordena de manera descendente =true o ascendente=false.)</param>
+        /// <param name="campoOrdenar">
+        /// OPCIONAL(String nombre del campo por el cual se desea ordenar el resultado de la consulta.)
+        /// </param>
+        /// <param name="orderDesc">
+        /// OPCIONAL(Bool true por defecto para seleccionar si se ordena de manera descendente =true
+        /// o ascendente=false.)
+        /// </param>
         /// <returns>La entidad que contiene el valor indicado, de otra manera null</returns>
         public ICollection<TEntity> findByAttribute(string value, string attribute, bool exacto = true, string campoOrdenar = null, bool orderDesc = true)
         {
@@ -525,42 +436,95 @@ namespace DataMapper
             return lEntities;
         }
 
-
         /// <summary>
-        /// Consulta la cantidad de entidades en la BD
+        /// Obtiene Tos los campos de una tabla
         /// </summary>
-        /// <returns>Numero de entidades con persistencia en BD</returns>
-        public long Count()
+        /// <param name="campoOrdenar">
+        /// OPCIONAL(String nombre del campo por el cual se desea ordenar el resultado de la consulta.)
+        /// </param>
+        /// <param name="orderDesc">
+        /// OPCIONAL(Bool true por defecto para seleccionar si se ordena de manera descendente =true
+        /// o ascendente=false.)
+        /// </param>
+        /// <returns></returns>
+        public ICollection<TEntity> GetAll(string campoOrdenar = null, bool orderDesc = true)
         {
-            Type type = GetType().GenericTypeArguments[0];
-            Object rowsST;
-            if (_countSentence == null)
+            ICollection<TEntity> lEntities = null;
+            using (SqlConnection con = new SqlConnection(GetConnectionString()))
             {
-                _countSentence = "SELECT COUNT(*) FROM " + type.Name + ";";
-            }
-
-            using (SqlConnection con = new SqlConnection(ConnectionString))
-            {
-                using (SqlCommand command = new SqlCommand(_countSentence, con))
+                if (String.IsNullOrEmpty(campoOrdenar))
                 {
-                    command.CommandType = CommandType.Text;
+                    String pk = GetPrimarykeys();
+                    campoOrdenar = pk;
+                }
+                SqlDataReader reader = null;
+                Type type = GetType().GenericTypeArguments[0];
+                String sqlSentece = "SELECT  * FROM " + type.Name + " ORDER BY " + campoOrdenar;
+                sqlSentece += (orderDesc) ? " ASC; " : " DESC;";
+                using (SqlCommand command = new SqlCommand(sqlSentece, con))
+                {
                     con.Open();
-                    rowsST = command.ExecuteScalar();
+                    reader = command.ExecuteReader();
+                    lEntities = MapResultsToEntities(ref reader);
                 }
             }
-            return (rowsST == null) ? 0 : Int64.Parse(rowsST.ToString());
+            return lEntities;
         }
 
+        /// <summary>
+        /// Actualiza un registro en la base de datos dependiendo de la entidad de entrada y llave primaia.
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        public bool Update(TEntity entity)
+        {
+            int rowAfected = 0;
+            var properties = typeof(TEntity).GetProperties().ToList();
+            String pkey = GetPrimarykeys();
+
+            if (String.IsNullOrEmpty(pkey))
+            {
+                throw new ArgumentNullException(pkey);
+            }
+
+            properties = properties.Where(p => p.GetValue(entity) != null).ToList();
+
+            SqlParameter[] sqlParams = new SqlParameter[properties.Count];
+            SqlParameter param = null;
+            // get identity key
+            PropertyInfo prop = PropertyFromCustomAttribute(pkey);
+            // delete identity key
+            properties.Remove(prop);
+
+            String sqlStatement = "UPDATE " + entity.GetType().Name + " SET ";
+
+            // set sqlparameters and query
+            for (int i = 0; i < properties.Count; i++)
+            {
+                PropertyInfo property = properties.ElementAt(i);
+                String field = CustomAttributeFromProperty(property);
+                sqlStatement += field + " = " + ((i < properties.Count - 1) ? "@" + field + ", " : "@" + field);
+                param = new SqlParameter("@" + field, property.GetValue(entity) ?? DBNull.Value);
+                sqlParams[i] = param;
+            }
+
+            String fieldWhere = CustomAttributeFromProperty(prop);
+            sqlStatement += " WHERE " + fieldWhere + " = @" + fieldWhere;
+            param = new SqlParameter("@" + fieldWhere, prop.GetValue(entity, null));
+            sqlParams[properties.Count] = param;
+
+            rowAfected = ExecuteUpdate(sqlStatement, sqlParams);
+
+            return (rowAfected > 0);
+        }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="property"></param>
         /// <param name="type"></param>
         /// <returns></returns>
         private string BuildFindSqlSentence(PropertyInfo property, Type type, String value = null, bool exacto = true)
         {
-
             if (_findSQLSentence == null)
             {
                 String field = null;
@@ -574,39 +538,37 @@ namespace DataMapper
                 else
                 {
                     _findSQLSentence += " = @Value";
-
                 }
             }
             return _findSQLSentence;
-
         }
-        #endregion
-        #region EjecucionSP
 
         /// <summary>
-        /// Ejecuta un procedimiento almacenado de seleccion de registros
+        /// Ejecuta el query de actualizacion
         /// </summary>
-        /// <param name="procedureName"></param>        
-        /// <param name="sqlParam"></param>
+        /// <param name="sqlStatement"></param>
+        /// <param name="sqlParams"></param>
         /// <returns></returns>
-        public ICollection<TEntity> ExecuteSelectSP(string procedureName, params SqlParameter[] sqlParam)
+        private int ExecuteUpdate(String sqlStatement, SqlParameter[] sqlParams)
         {
-            ICollection<TEntity> lEntities = null;
-            String connectionSt = GetConnectionString();
-            using (SqlConnection connection = new SqlConnection(connectionSt))
+            int rowAfected = 0;
+            using (SqlConnection connection = new SqlConnection(ConnectionString))
             {
-                connection.Open();
-                SqlDataReader reader = (SqlDataReader)ExecuteProcedure(procedureName, ExecuteType.ExecuteReader, connection, sqlParam);
-
-                if (reader.HasRows)
+                SqlCommand command = new SqlCommand(sqlStatement, connection);
                 {
-                    lEntities = MapResultsToEntities(ref reader);
+                    connection.Open();
+                    if (sqlParams != null && sqlParams.Length > 0)
+                        command.Parameters.AddRange(sqlParams);
+                    rowAfected = command.ExecuteNonQuery();
+                    command.Dispose();
                 }
-                reader.Close();
             }
-
-            return lEntities;
+            return rowAfected;
         }
+
+        #endregion Ejecucion consultas dinamicas
+
+        #region EjecucionSP
 
         /// <summary>
         /// Ejecuta un procedimiento almacenado de creacion de un registro
@@ -616,7 +578,6 @@ namespace DataMapper
         /// <param name="sqlParam"></param>
         public TEntityObject ExecuteCreateSP<TEntityObject>(TEntityObject entity, string procedureName, params SqlParameter[] sqlParam)
         {
-
             String pk = GetPrimarykeys();
 
             using (SqlConnection connection = new SqlConnection(GetConnectionString()))
@@ -638,13 +599,23 @@ namespace DataMapper
             }
         }
 
-        private string GetPrimarykeys()
+        /// <summary>
+        /// Ejecuta un procedimiento que retorna un Boolean
+        /// </summary>
+        /// <param name="procedureName"></param>
+        /// <param name="sqlParam"></param>
+        /// <returns></returns>
+        public object ExecuteGeneralSP(string procedureName, params SqlParameter[] sqlParam)
         {
-            if (_primaryKeys.Count == 0)
+            object returnValue;
+
+            using (SqlConnection connection = new SqlConnection(GetConnectionString()))
             {
-                throw new Exception("La Tabla { " + _nombretabla + " } no contiene llaves primarias.");
+                connection.Open();
+                returnValue = ExecuteProcedure(procedureName, ExecuteType.ExecuteScalar, connection, sqlParam);
             }
-            return _primaryKeys.Keys.ElementAt(0);
+
+            return returnValue;
         }
 
         /// <summary>
@@ -667,7 +638,8 @@ namespace DataMapper
         }
 
         /// <summary>
-        /// Metodo publico que ejecuta un procedimiento almacenado de consulta, actualizacion, creacion o eliminacion
+        /// Metodo publico que ejecuta un procedimiento almacenado de consulta, actualizacion,
+        /// creacion o eliminacion
         /// </summary>
         /// <param name="procedureName"></param>
         /// <param name="executeType"></param>
@@ -694,7 +666,6 @@ namespace DataMapper
         /// <returns></returns>
         public object ExecuteProcedure(string procedureName, ExecuteType executeType, SqlConnection conection, params SqlParameter[] sqlParams)
         {
-
             object returnObject = null;
             long ExecutionId = 0;
 
@@ -702,8 +673,6 @@ namespace DataMapper
             {
                 using (var cmd = conection.CreateCommand())
                 {
-
-
                     cmd.CommandText = procedureName;
                     cmd.CommandType = CommandType.StoredProcedure;
                     if (sqlParams != null)
@@ -724,8 +693,6 @@ namespace DataMapper
                         }
                     }
 
-                    //conection.InfoMessage += new SqlInfoMessageEventHandler(OnSQLMessageInfo);
-
                     if (_isAuditEnable)
                     {
                         ExecutionId = StartAuditing(procedureName, conection, sqlParams);
@@ -736,30 +703,56 @@ namespace DataMapper
                         case ExecuteType.ExecuteReader:
                             returnObject = cmd.ExecuteReader();
                             break;
+
                         case ExecuteType.ExecuteNonQuery:
                             returnObject = cmd.ExecuteNonQuery();
                             break;
+
                         case ExecuteType.ExecuteScalar:
                             returnObject = cmd.ExecuteScalar();
                             break;
+
                         default:
                             break;
                     }
                 }
                 if (_isAuditEnable)
                 {
-                   EndAuditing(ExecutionId, returnObject, _sqlConsoleMessage, true);
+                    EndAuditing(ExecutionId, returnObject, _sqlConsoleMessage, true);
                 }
             }
             catch (Exception Ex)
             {
-
-                //conection.InfoMessage += new SqlInfoMessageEventHandler(OnSQLMessageInfo);
-                EndAuditing(ExecutionId, Ex.Message + " ["+conection.Database+"] ", _sqlConsoleMessage, false);
+                EndAuditing(ExecutionId, Ex.Message + " [" + conection.Database + "] ", _sqlConsoleMessage, false);
                 throw new Exception(Ex.Message + " [" + conection.Database + "] ");
             }
 
             return returnObject;
+        }
+
+        /// <summary>
+        /// Ejecuta un procedimiento almacenado de seleccion de registros
+        /// </summary>
+        /// <param name="procedureName"></param>
+        /// <param name="sqlParam"></param>
+        /// <returns></returns>
+        public ICollection<TEntity> ExecuteSelectSP(string procedureName, params SqlParameter[] sqlParam)
+        {
+            ICollection<TEntity> lEntities = null;
+            String connectionSt = GetConnectionString();
+            using (SqlConnection connection = new SqlConnection(connectionSt))
+            {
+                connection.Open();
+                SqlDataReader reader = (SqlDataReader)ExecuteProcedure(procedureName, ExecuteType.ExecuteReader, connection, sqlParam);
+
+                if (reader.HasRows)
+                {
+                    lEntities = MapResultsToEntities(ref reader);
+                }
+                reader.Close();
+            }
+
+            return lEntities;
         }
 
         private void EndAuditing(long executionId, object returnObject, string sqlConsoleMessage, bool isSuccessful)
@@ -767,7 +760,8 @@ namespace DataMapper
             string jsonParameters = null;
             //jsonParameters = JsonConvert.SerializeObject(returnObject);
 
-            if (jsonParameters == null) {
+            if (jsonParameters == null)
+            {
                 jsonParameters = "No existe retorno en ejecucion del procedimiento. (NULL)";
             }
 
@@ -791,6 +785,28 @@ namespace DataMapper
             }
         }
 
+        private string GetAuditConnectionString()
+        {
+            string connectionString = null;
+
+            connectionString = ConfigurationManager.AppSettings["ConnectionString.Auditoria"];
+
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                throw new ArgumentNullException("Connection String Auditoria no encontrada Key (ConnectionString.Auditoria) No encontrada.");
+            }
+            return connectionString;
+        }
+
+        private string GetPrimarykeys()
+        {
+            if (_primaryKeys.Count == 0)
+            {
+                throw new Exception("La Tabla { " + _nombretabla + " } no contiene llaves primarias.");
+            }
+            return _primaryKeys.Keys.ElementAt(0);
+        }
+
         private void OnSQLMessageInfo(object sender, SqlInfoMessageEventArgs e)
         {
             if (_isAuditEnable)
@@ -805,7 +821,6 @@ namespace DataMapper
             long executionId = -1;
             using (SqlConnection connection = new SqlConnection(GetAuditConnectionString()))
             {
-
                 using (SqlCommand command = new SqlCommand
                 {
                     Connection = connection,
@@ -816,8 +831,6 @@ namespace DataMapper
                     List<Parameter> lParameters = new List<Parameter>();
                     if (sqlParams != null && sqlParams.Count() > 0)
                     {
-
-
                         foreach (SqlParameter param in sqlParams)
                         {
                             Parameter p = new Parameter
@@ -840,8 +853,9 @@ namespace DataMapper
                     {
                         jsonParameters = JsonConvert.SerializeObject(lParameters);
                     }
-                    else {
-                        jsonParameters = procedureName + " - No contiene parametros de entrada."; 
+                    else
+                    {
+                        jsonParameters = procedureName + " - No contiene parametros de entrada.";
                     }
 
                     command.Parameters.AddWithValue("@Datasource", datasource);
@@ -858,7 +872,6 @@ namespace DataMapper
                     if (rdr.Read())
                     {
                         executionId = Convert.ToInt64(rdr["ExecutionId"].ToString());
-
                     }
                     connection.Close();
                 }
@@ -866,236 +879,9 @@ namespace DataMapper
             return executionId;
         }
 
-        private string GetAuditConnectionString()
-        {
-            string connectionString = null;
-
-            connectionString = ConfigurationManager.AppSettings["ConnectionString.Auditoria"];
-
-
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                throw new ArgumentNullException("Connection String Auditoria no encontrada Key (ConnectionString.Auditoria) No encontrada.");
-            }
-            return connectionString;
-        }
-
-        /// <summary>
-        /// Ejecuta un procedimiento que retorna un Boolean
-        /// </summary>
-        /// <param name="procedureName"></param>
-        /// <param name="sqlParam"></param>
-        /// <returns></returns>
-        public object ExecuteGeneralSP(string procedureName, params SqlParameter[] sqlParam)
-        {
-            object returnValue;
-
-            using (SqlConnection connection = new SqlConnection(GetConnectionString()))
-            {
-                connection.Open();
-                returnValue = ExecuteProcedure(procedureName, ExecuteType.ExecuteScalar, connection, sqlParam);
-            }
-
-            return returnValue;
-        }
-        #endregion
-
+        #endregion EjecucionSP
 
         #region FuncionesGenerales
-
-
-        /// <summary>
-        /// Obtiene la cadena de conexion parametrizada
-        /// </summary>
-        /// <returns></returns>
-        private string GetConnectionString()
-        {
-            string projectStage = ConfigurationManager.AppSettings["PROJECT_STAGE"];
-            if (string.IsNullOrEmpty(projectStage))
-            {
-                throw new Exception("App Settings Key = [PROJECT_STAGE], No encontrada en web.config.");
-            }
-            string connectionString = null;
-            switch (projectStage.ToUpper())
-            {
-                case "DESARROLLO":
-                    connectionString = ConfigurationManager.AppSettings["ConnectionString.Desarrollo"];
-                    break;
-                case "PRUEBAS":
-                    connectionString = ConfigurationManager.AppSettings["ConnectionString.Pruebas"];
-                    break;
-                case "PRODUCCION":
-                    connectionString = ConfigurationManager.AppSettings["ConnectionString.Produccion"];
-                    break;
-            }
-            if (connectionString == null)
-            {
-                throw new ArgumentNullException("Connection String no encontrada (PROJECT_STAGE) No encontrado" + projectStage);
-            }
-            return connectionString;
-        }
-
-
-
-
-
-        /// <summary>
-        /// Verifica si el campo es Identity en base de datos
-        /// </summary>
-        /// <param name="columnName"></param>
-        /// <returns></returns>
-        private bool IsIdentity(string columnName)
-        {
-            if (_identityColumn == "")
-            {
-                return false;
-            }
-            return columnName.Equals(_identityColumn, StringComparison.OrdinalIgnoreCase);
-        }
-
-        /// <summary>
-        /// Mapea el datareader a la entidad y devuelve una coleccion
-        /// </summary>
-        /// <param name="reader"></param>
-        /// <returns></returns>
-        private ICollection<TEntity> MapResultsToEntities(ref SqlDataReader reader)
-        {
-            ICollection<TEntity> lEntities = new Collection<TEntity>();
-            while (reader.Read())
-            {
-                TEntity entity = null;
-                //TODO find a constructor that has zero parameters on TEntity then, use the Activator.CreateInstance method. 
-                //Otherwise, you use the Factory<T>.CreateNew() method
-                //var constructors = typeof(TEntity).GetConstructors();
-                entity = (TEntity)Activator.CreateInstance(typeof(TEntity));
-                entity = MapColumnsToEntity(ref entity, ref reader);
-                lEntities.Add(entity);
-            }
-            return lEntities;
-        }
-
-        /// <summary>
-        /// Mapea el datareader a la entidad
-        /// </summary>
-        /// <param name="entity"></param>
-        /// <param name="reader"></param>
-        /// <returns></returns>
-        private TEntity MapColumnsToEntity(ref TEntity entity, ref SqlDataReader reader)
-        {
-            int columns = reader.FieldCount;
-            for (int i = 0; i < columns; i++)
-            {
-
-                String attributeName = reader.GetName(i);
-                PropertyInfo attr = PropertyFromCustomAttribute(attributeName);
-                if (attr != null)
-                {
-                    Type dataType = reader.GetFieldType(i);
-                    bool isNull = reader.IsDBNull(i);
-                    if (isNull) { attr.SetValue(entity, null); }
-                    else
-                    {
-                        switch (dataType.ToString())
-                        {
-                            case "System.Int64":
-                                attr.SetValue(entity, reader.GetInt64(i));
-                                break;
-                            case "System.Int32":
-                                attr.SetValue(entity, reader.GetInt32(i));
-                                break;
-                            case "System.Int16":
-
-                                attr.SetValue(entity, reader.GetInt16(i));
-                                break;
-                            case "System.String":
-                                attr.SetValue(entity, reader.GetString(i));
-                                break;
-                            case "System.DateTime":
-                                attr.SetValue(entity, reader.GetDateTime(i));
-                                break;
-                            case "System.Decimal":
-                                attr.SetValue(entity, reader.GetDecimal(i));
-                                break;
-                            case "System.Double":
-                                attr.SetValue(entity, reader.GetDouble(i));
-                                break;
-                            case "System.Byte":
-                                attr.SetValue(entity, reader.GetByte(i));
-                                break;
-                            case "System.Single":
-                                attr.SetValue(entity, reader.GetFloat(i));
-                                break;
-                            case "System.Boolean":
-                                attr.SetValue(entity, reader.GetBoolean(i));
-                                break;
-                            case "System.Guid":
-                                attr.SetValue(entity, reader.GetGuid(i));
-                                break;
-                        }
-                    }
-                }
-            }
-            return entity;
-        }
-
-        /// <summary>
-        /// Obtiene el nombre de la propiedad
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="expression"></param>
-        /// <returns></returns>
-        public string GetPropertyName<T>(Expression<Func<T>> expression)
-        {
-            MemberExpression body = (MemberExpression)expression.Body;
-            return body.Member.Name;
-        }
-
-        /// <summary>
-        /// Retorna la propiedad correspondiente al alias(ColumnAttribute) filtrado
-        /// </summary>
-        /// <param name="customAttribute"></param>
-        /// <returns></returns>
-        private PropertyInfo PropertyFromCustomAttribute(String customAttribute)
-        {
-            PropertyInfo attr = null;
-            var properties = typeof(TEntity).GetProperties()
-                      .Where(p => p.IsDefined(typeof(ColumnAttribute), false))
-                      .Select(p => new
-                      {
-                          PropertyName = p.Name,
-                          p.GetCustomAttributes(typeof(ColumnAttribute),
-                                  false).Cast<ColumnAttribute>().Single().Name
-                      });
-            String columnMapping = properties.FirstOrDefault(a => a.Name == customAttribute)?.PropertyName;
-            if (!String.IsNullOrEmpty(columnMapping))
-            {
-                attr = typeof(TEntity).GetProperty(columnMapping);
-            }
-            return attr;
-        }
-
-        /// <summary>
-        /// Retorna el alias de la propiedad filtrada
-        /// </summary>
-        /// <param name="property"></param>
-        /// <returns></returns>
-        private string CustomAttributeFromProperty(PropertyInfo property)
-        {
-            string propiedad = property.ToString();
-
-            if (!_CustomAttributes.ContainsKey(propiedad))
-            {
-                var customAttri = property.GetCustomAttributes(false);
-                var columnMapping = customAttri.FirstOrDefault(a => a.GetType() == typeof(ColumnAttribute));
-                ColumnAttribute map = columnMapping as ColumnAttribute;
-                if (map == null)
-                {
-                    return property.Name;
-                }
-                _CustomAttributes.Add(propiedad, map.Name);
-            }
-            return _CustomAttributes[propiedad];
-        }
 
         /// <summary>
         /// Crea los parametros a enviar, recibidos mediante la entidad
@@ -1126,22 +912,16 @@ namespace DataMapper
             return sqlParams;
         }
 
-
-        public ICollection<TEntity> ExecuteSelectSP(string procedureName, SqlParameterCollection sqlParamsCollection = null)
-        {
-
-            SqlParameter[] parameters = null;
-            if (sqlParamsCollection != null)
-            {
-                parameters = SqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
-            }
-            return ExecuteSelectSP(procedureName, parameters);
-        }
-
         public TEntityObject ExecuteCreateSP<TEntityObject>(TEntityObject entity, string procedureName, SqlParameterCollection sqlParamsCollection)
         {
             SqlParameter[] parameters = SqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
             return ExecuteCreateSP<TEntityObject>(entity, procedureName, parameters);
+        }
+
+        public object ExecuteGeneralSP(string procedureName, SqlParameterCollection sqlParamsCollection)
+        {
+            SqlParameter[] parameters = SqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
+            return ExecuteGeneralSP(procedureName, parameters);
         }
 
         public int ExecuteNonQuerySP(string procedureName, SqlParameterCollection sqlParamsCollection)
@@ -1150,20 +930,226 @@ namespace DataMapper
             return ExecuteNonQuerySP(procedureName, parameters);
         }
 
-        public object ExecuteGeneralSP(string procedureName, SqlParameterCollection sqlParamsCollection)
-        {
-            SqlParameter[] parameters = SqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
-            return ExecuteGeneralSP(procedureName, parameters);
-        }
         public object ExecuteProcedure(string procedureName, ExecuteType executeType, SqlParameterCollection sqlParamsCollection)
         {
             SqlParameter[] parameters = SqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
             return ExecuteProcedure(procedureName, executeType, parameters);
         }
 
-        #endregion
+        public ICollection<TEntity> ExecuteSelectSP(string procedureName, SqlParameterCollection sqlParamsCollection = null)
+        {
+            SqlParameter[] parameters = null;
+            if (sqlParamsCollection != null)
+            {
+                parameters = SqlParameterCollectionToSqlParameterArray(sqlParamsCollection);
+            }
+            return ExecuteSelectSP(procedureName, parameters);
+        }
+
+        /// <summary>
+        /// Obtiene el nombre de la propiedad
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="expression"></param>
+        /// <returns></returns>
+        public string GetPropertyName<T>(Expression<Func<T>> expression)
+        {
+            MemberExpression body = (MemberExpression)expression.Body;
+            return body.Member.Name;
+        }
+
+        /// <summary>
+        /// Retorna el alias de la propiedad filtrada
+        /// </summary>
+        /// <param name="property"></param>
+        /// <returns></returns>
+        private string CustomAttributeFromProperty(PropertyInfo property)
+        {
+            string propiedad = property.ToString();
+
+            if (!_CustomAttributes.ContainsKey(propiedad))
+            {
+                var customAttri = property.GetCustomAttributes(false);
+                var columnMapping = customAttri.FirstOrDefault(a => a.GetType() == typeof(ColumnAttribute));
+                ColumnAttribute map = columnMapping as ColumnAttribute;
+                if (map == null)
+                {
+                    return property.Name;
+                }
+                _CustomAttributes.Add(propiedad, map.Name);
+            }
+            return _CustomAttributes[propiedad];
+        }
+
+        /// <summary>
+        /// Obtiene la cadena de conexion parametrizada
+        /// </summary>
+        /// <returns></returns>
+        private string GetConnectionString()
+        {
+            string projectStage = ConfigurationManager.AppSettings["PROJECT_STAGE"];
+            if (string.IsNullOrEmpty(projectStage))
+            {
+                throw new Exception("App Settings Key = [PROJECT_STAGE], No encontrada en web.config.");
+            }
+            string connectionString = null;
+            switch (projectStage.ToUpper())
+            {
+                case "DESARROLLO":
+                    connectionString = ConfigurationManager.AppSettings["ConnectionString.Desarrollo"];
+                    break;
+
+                case "PRUEBAS":
+                    connectionString = ConfigurationManager.AppSettings["ConnectionString.Pruebas"];
+                    break;
+
+                case "PRODUCCION":
+                    connectionString = ConfigurationManager.AppSettings["ConnectionString.Produccion"];
+                    break;
+            }
+            if (connectionString == null)
+            {
+                throw new ArgumentNullException("Connection String no encontrada (PROJECT_STAGE) No encontrado" + projectStage);
+            }
+            return connectionString;
+        }
+
+        /// <summary>
+        /// Verifica si el campo es Identity en base de datos
+        /// </summary>
+        /// <param name="columnName"></param>
+        /// <returns></returns>
+        private bool IsIdentity(string columnName)
+        {
+            if (_identityColumn == "")
+            {
+                return false;
+            }
+            return columnName.Equals(_identityColumn, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Mapea el datareader a la entidad
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="reader"></param>
+        /// <returns></returns>
+        private TEntity MapColumnsToEntity(ref TEntity entity, ref SqlDataReader reader)
+        {
+            int columns = reader.FieldCount;
+            for (int i = 0; i < columns; i++)
+            {
+                String attributeName = reader.GetName(i);
+                PropertyInfo attr = PropertyFromCustomAttribute(attributeName);
+                if (attr != null)
+                {
+                    Type dataType = reader.GetFieldType(i);
+                    bool isNull = reader.IsDBNull(i);
+                    if (isNull) { attr.SetValue(entity, null); }
+                    else
+                    {
+                        switch (dataType.ToString())
+                        {
+                            case "System.Int64":
+                                attr.SetValue(entity, reader.GetInt64(i));
+                                break;
+
+                            case "System.Int32":
+                                attr.SetValue(entity, reader.GetInt32(i));
+                                break;
+
+                            case "System.Int16":
+
+                                attr.SetValue(entity, reader.GetInt16(i));
+                                break;
+
+                            case "System.String":
+                                attr.SetValue(entity, reader.GetString(i));
+                                break;
+
+                            case "System.DateTime":
+                                attr.SetValue(entity, reader.GetDateTime(i));
+                                break;
+
+                            case "System.Decimal":
+                                attr.SetValue(entity, reader.GetDecimal(i));
+                                break;
+
+                            case "System.Double":
+                                attr.SetValue(entity, reader.GetDouble(i));
+                                break;
+
+                            case "System.Byte":
+                                attr.SetValue(entity, reader.GetByte(i));
+                                break;
+
+                            case "System.Single":
+                                attr.SetValue(entity, reader.GetFloat(i));
+                                break;
+
+                            case "System.Boolean":
+                                attr.SetValue(entity, reader.GetBoolean(i));
+                                break;
+
+                            case "System.Guid":
+                                attr.SetValue(entity, reader.GetGuid(i));
+                                break;
+                        }
+                    }
+                }
+            }
+            return entity;
+        }
+
+        /// <summary>
+        /// Mapea el datareader a la entidad y devuelve una coleccion
+        /// </summary>
+        /// <param name="reader"></param>
+        /// <returns></returns>
+        private ICollection<TEntity> MapResultsToEntities(ref SqlDataReader reader)
+        {
+            ICollection<TEntity> lEntities = new Collection<TEntity>();
+            while (reader.Read())
+            {
+                TEntity entity = null;
+                //TODO find a constructor that has zero parameters on TEntity then, use the Activator.CreateInstance method.
+                //Otherwise, you use the Factory<T>.CreateNew() method
+                //var constructors = typeof(TEntity).GetConstructors();
+                entity = (TEntity)Activator.CreateInstance(typeof(TEntity));
+                entity = MapColumnsToEntity(ref entity, ref reader);
+                lEntities.Add(entity);
+            }
+            return lEntities;
+        }
+
+        /// <summary>
+        /// Retorna la propiedad correspondiente al alias(ColumnAttribute) filtrado
+        /// </summary>
+        /// <param name="customAttribute"></param>
+        /// <returns></returns>
+        private PropertyInfo PropertyFromCustomAttribute(String customAttribute)
+        {
+            PropertyInfo attr = null;
+            var properties = typeof(TEntity).GetProperties()
+                      .Where(p => p.IsDefined(typeof(ColumnAttribute), false))
+                      .Select(p => new
+                      {
+                          PropertyName = p.Name,
+                          p.GetCustomAttributes(typeof(ColumnAttribute),
+                                  false).Cast<ColumnAttribute>().Single().Name
+                      });
+            String columnMapping = properties.FirstOrDefault(a => a.Name == customAttribute)?.PropertyName;
+            if (!String.IsNullOrEmpty(columnMapping))
+            {
+                attr = typeof(TEntity).GetProperty(columnMapping);
+            }
+            return attr;
+        }
+
+        #endregion FuncionesGenerales
 
         #region Utils
+
         private static SqlParameter[] SqlParameterCollectionToSqlParameterArray(SqlParameterCollection sqlParamsCollection)
         {
             SqlParameter[] parameters = new SqlParameter[sqlParamsCollection.Count];
@@ -1176,12 +1162,9 @@ namespace DataMapper
 
             return parameters;
         }
-        #endregion
 
-        #endregion
+        #endregion Utils
 
+        #endregion Metodos
     }
-
 }
-
-
