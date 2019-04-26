@@ -38,6 +38,7 @@ namespace DataMapper
         private string _identityColumn = null;
         private string _insertStatement = null;
         private string _nombretabla = null;
+        private const string _atSign = "@";
 
         #region Crear instancia
 
@@ -144,7 +145,7 @@ namespace DataMapper
                         string prop = CustomAttributeFromProperty(property);
                         if (!IsIdentity(prop) && !_calculatedKeys.ContainsKey(prop))
                         {
-                            builder.Append((i < properties.Count - 1) ? "@" + prop + ", " : "@" + prop);
+                            builder.Append((i < properties.Count - 1) ? _atSign + prop + ", " : _atSign + prop);
                         }
                     }
                     builder.Append("); SELECT SCOPE_IDENTITY();");
@@ -268,7 +269,7 @@ namespace DataMapper
                 if (string.Compare(_identityColumn, prop, StringComparison.InvariantCultureIgnoreCase) != 0)
                 {
                     Object value = property.GetValue(entity, null) ?? DBNull.Value;
-                    SqlParameter parameter = new SqlParameter("@" + prop, value);
+                    SqlParameter parameter = new SqlParameter(_atSign + prop, value);
                     command.Parameters.Add(parameter);
                 }
             }
@@ -364,7 +365,7 @@ namespace DataMapper
                 {
                     connection.Open();
                     command.CommandText = $"DELETE FROM {tableName} WHERE {pkey} = @{pkey}";
-                    command.Parameters.AddWithValue("@" + pkey, prop.GetValue(entity, null));
+                    command.Parameters.AddWithValue(_atSign + pkey, prop.GetValue(entity, null));
                     rowAfected = command.ExecuteNonQuery();
                 }
             }
@@ -507,14 +508,14 @@ namespace DataMapper
             {
                 PropertyInfo property = properties.ElementAt(i);
                 string field = CustomAttributeFromProperty(property);
-                sqlStatement += field + " = " + ((i < properties.Count - 1) ? "@" + field + ", " : "@" + field);
-                param = new SqlParameter("@" + field, property.GetValue(entity) ?? DBNull.Value);
+                sqlStatement += field + " = " + ((i < properties.Count - 1) ? _atSign + field + ", " : _atSign + field);
+                param = new SqlParameter(_atSign + field, property.GetValue(entity) ?? DBNull.Value);
                 sqlParams[i] = param;
             }
 
             string fieldWhere = CustomAttributeFromProperty(prop);
             sqlStatement += $" WHERE {fieldWhere} = @{fieldWhere}";
-            param = new SqlParameter("@" + fieldWhere, prop.GetValue(entity, null));
+            param = new SqlParameter(_atSign + fieldWhere, prop.GetValue(entity, null));
             sqlParams[properties.Count] = param;
 
             rowAfected = ExecuteUpdate(sqlStatement, sqlParams);
@@ -686,18 +687,47 @@ namespace DataMapper
                     {
                         // get parameters procedure
                         SqlCommandBuilder.DeriveParameters(cmd);
-                        foreach (SqlParameter parm in cmd.Parameters)
-                        {
-                            parm.IsNullable = true;
 
-                            foreach (SqlParameter parmeter in sqlParams)
+                        SqlParameter parameter = null;
+                        SqlParameter parameter2 = null;
+                        //Micro Optimization in foreach
+                        int qtyParameters = cmd.Parameters.Count;
+                        int qtyParameters2 = sqlParams.Count();
+                        int cmp;
+                        string st1 = null;
+                        string st2 = null;
+                        for (int i = 0; i < qtyParameters; i++)
+                        {
+                            parameter = cmd.Parameters[i];
+
+                            parameter.IsNullable = true;
+
+                            for (int j = 0; j < qtyParameters2; j++)
                             {
-                                if (parm.ParameterName.Replace("@", "").ToUpper() == parmeter.ParameterName.Replace("@", "").ToUpper())
+                                parameter2 = sqlParams[i];
+
+                                //micro opt
+                                st1 = parameter.ParameterName.Replace(_atSign, "");
+                                st2 = parameter2.ParameterName.Replace(_atSign, "");
+                                
+                                if ((string.Compare(st1, st2, true))== 0)  //Ignoring cases
                                 {
-                                    parm.Value = parmeter.Value ?? DBNull.Value;
+                                    parameter.Value = parameter2.Value ?? DBNull.Value;
                                 }
                             }
                         }
+                        
+                        //foreach (SqlParameter parm in cmd.Parameters)
+                        //{
+                        //    parm.IsNullable = true;
+                        //    foreach (SqlParameter parmeter in sqlParams)
+                        //    {
+                        //        if (parm.ParameterName.Replace(_atSign, "").ToUpper() == parmeter.ParameterName.Replace(_atSign, "").ToUpper())
+                        //        {
+                        //            parm.Value = parmeter.Value ?? DBNull.Value;
+                        //        }
+                        //    }
+                        //}
                     }
 
                     if (_isAuditEnable)
@@ -839,8 +869,11 @@ namespace DataMapper
                     List<Parameter> lParameters = new List<Parameter>();
                     if (sqlParams != null && sqlParams.Count() > 0)
                     {
-                        foreach (SqlParameter param in sqlParams)
-                        {
+                        int qty = sqlParams.Count();
+                        SqlParameter param = null;
+                        for (int i=0; i<qty; i++) { 
+                         param = sqlParams[i];
+                        
                             Parameter p = new Parameter
                             {
                                 Name = param.ParameterName,
