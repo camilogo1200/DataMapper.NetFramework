@@ -29,9 +29,9 @@ namespace DataMapper
         /// <summary>
         /// Atributo utilizado para evitar problemas con multithreading en el singleton.
         /// </summary>
-        private static object syncRoot = new Object();
+        private static object syncRoot = new object();
 
-        private readonly string _separator = "-----------------------------------------------------";
+        private const string _separator = "-----------------------------------------------------";
         private string _connectionString = null;
         private string _countSentence = null;
         private string _findSQLSentence = null;
@@ -39,7 +39,10 @@ namespace DataMapper
         private string _insertStatement = null;
         private string _nombretabla = null;
         private const string _atSign = "@";
-
+        private const string _addDbLogSp = "[database].[pa_AddDatabaseLog]";
+        private const string _updateDbLogSP = "[database].[pa_UpdateExecutionLog]";
+        private const string _ZeroSt = "0";
+        private const string _ValueSt = "@Value";
         #region Crear instancia
 
         private static volatile DataMapper<TEntity> instancia;
@@ -98,7 +101,7 @@ namespace DataMapper
             }
         }
 
-        #endregion Crear instancia
+        #endregion Crear instancia              
 
         #region Metodos
 
@@ -186,8 +189,8 @@ namespace DataMapper
                                     {
                                         try
                                         {
-                                            string key = propiedadesReader["NOMBRE_CAMPO"] == DBNull.Value ? "" : propiedadesReader["NOMBRE_CAMPO"].ToString();
-                                            string value = propiedadesReader["PROPIEDAD"] == DBNull.Value ? "" : propiedadesReader["PROPIEDAD"].ToString();
+                                            string key = propiedadesReader["NOMBRE_CAMPO"] == DBNull.Value ? string.Empty : propiedadesReader["NOMBRE_CAMPO"].ToString();
+                                            string value = propiedadesReader["PROPIEDAD"] == DBNull.Value ? string.Empty : propiedadesReader["PROPIEDAD"].ToString();
 
                                             switch (value)
                                             {
@@ -417,13 +420,13 @@ namespace DataMapper
 
                 {
                     Type propertyType = property.PropertyType;
-                    if (!exacto && propertyType.Equals(Type.GetType("System.String")))
+                    if (!exacto && propertyType.Equals(Type.GetType(DataTypes._STRING)))
                     {
-                        command.Parameters.AddWithValue("@Value", "%" + value + "%");
+                        command.Parameters.AddWithValue(_ValueSt, "%" + value + "%");
                     }
                     else
                     {
-                        command.Parameters.AddWithValue("@Value", value);
+                        command.Parameters.AddWithValue(_ValueSt, value);
                     }
 
                     command.CommandType = CommandType.Text;
@@ -536,13 +539,13 @@ namespace DataMapper
                 field = CustomAttributeFromProperty(property);
                 _findSQLSentence = $"SELECT * FROM {type.Name} WHERE {field}";
                 Type propertyType = property.PropertyType;
-                if (!exacto && propertyType.Equals(Type.GetType("System.String")))
+                if (!exacto && propertyType.Equals(Type.GetType(DataTypes._STRING)))
                 {
                     _findSQLSentence += " like @value";
                 }
                 else
                 {
-                    _findSQLSentence += " = @Value";
+                    _findSQLSentence += _ValueSt;
                 }
             }
             return _findSQLSentence;
@@ -598,7 +601,7 @@ namespace DataMapper
                 TypeConverter converter = TypeDescriptor.GetConverter(property.PropertyType);
                 string valorIn = property.GetValue(entity)?.ToString();
                 string Ident = ExecuteProcedure(procedureName, ExecuteType.ExecuteScalar, connection, sqlParam)?.ToString();
-                if (!string.IsNullOrEmpty(Ident) && (string.IsNullOrEmpty(valorIn) || valorIn == "0"))
+                if (!string.IsNullOrEmpty(Ident) && (string.IsNullOrEmpty(valorIn) || valorIn == _ZeroSt))
                 {
                     var result = converter.ConvertFrom(Ident);
                     property.SetValue(entity, result, null);
@@ -693,7 +696,6 @@ namespace DataMapper
                         //Micro Optimization in foreach
                         int qtyParameters = cmd.Parameters.Count;
                         int qtyParameters2 = sqlParams.Count();
-                        int cmp;
                         string st1 = null;
                         string st2 = null;
                         for (int i = 0; i < qtyParameters; i++)
@@ -707,16 +709,16 @@ namespace DataMapper
                                 parameter2 = sqlParams[i];
 
                                 //micro opt
-                                st1 = parameter.ParameterName.Replace(_atSign, "");
-                                st2 = parameter2.ParameterName.Replace(_atSign, "");
-                                
-                                if ((string.Compare(st1, st2, true))== 0)  //Ignoring cases
+                                st1 = parameter.ParameterName.Replace(_atSign, string.Empty);
+                                st2 = parameter2.ParameterName.Replace(_atSign, string.Empty);
+
+                                if ((string.Compare(st1, st2, true)) == 0)  //Ignoring cases
                                 {
                                     parameter.Value = parameter2.Value ?? DBNull.Value;
                                 }
                             }
                         }
-                        
+
                         //foreach (SqlParameter parm in cmd.Parameters)
                         //{
                         //    parm.IsNullable = true;
@@ -806,7 +808,7 @@ namespace DataMapper
                 using (SqlCommand command = new SqlCommand
                 {
                     Connection = connection,
-                    CommandText = "[database].[pa_UpdateExecutionLog]",
+                    CommandText = _updateDbLogSP,
                     CommandType = CommandType.StoredProcedure
                 })
                 {
@@ -862,18 +864,19 @@ namespace DataMapper
                 using (SqlCommand command = new SqlCommand
                 {
                     Connection = connection,
-                    CommandText = "[database].[pa_AddDatabaseLog]",
+                    CommandText = _addDbLogSp,
                     CommandType = CommandType.StoredProcedure
                 })
                 {
                     List<Parameter> lParameters = new List<Parameter>();
-                    if (sqlParams != null && sqlParams.Count() > 0)
+                    int qty = sqlParams.Count();
+                    if (sqlParams != null && qty > 0)
                     {
-                        int qty = sqlParams.Count();
                         SqlParameter param = null;
-                        for (int i=0; i<qty; i++) { 
-                         param = sqlParams[i];
-                        
+                        for (int i = 0; i < qty; i++)
+                        {
+                            param = sqlParams[i];
+
                             Parameter p = new Parameter
                             {
                                 Name = param.ParameterName,
@@ -1065,7 +1068,7 @@ namespace DataMapper
         /// <returns></returns>
         private bool IsIdentity(string columnName)
         {
-            if (_identityColumn == "")
+            if (_identityColumn == string.Empty)
             {
                 return false;
             }
@@ -1094,49 +1097,51 @@ namespace DataMapper
                     {
                         switch (dataType.ToString())
                         {
-                            case "System.Int64":
+                            case DataTypes._INT64:
                                 attr.SetValue(entity, reader.GetInt64(i));
                                 break;
 
-                            case "System.Int32":
+                            case DataTypes._INT32:
                                 attr.SetValue(entity, reader.GetInt32(i));
                                 break;
 
-                            case "System.Int16":
+                            case DataTypes._INT16:
 
                                 attr.SetValue(entity, reader.GetInt16(i));
                                 break;
 
-                            case "System.String":
+                            case DataTypes._STRING:
                                 attr.SetValue(entity, reader.GetString(i));
                                 break;
 
-                            case "System.DateTime":
+                            case DataTypes._DATETIME:
                                 attr.SetValue(entity, reader.GetDateTime(i));
                                 break;
 
-                            case "System.Decimal":
+                            case DataTypes._DECIMAL:
                                 attr.SetValue(entity, reader.GetDecimal(i));
                                 break;
 
-                            case "System.Double":
+                            case DataTypes._DOUBLE:
                                 attr.SetValue(entity, reader.GetDouble(i));
                                 break;
 
-                            case "System.Byte":
+                            case DataTypes._BYTE:
                                 attr.SetValue(entity, reader.GetByte(i));
                                 break;
 
-                            case "System.Single":
+                            case DataTypes._FLOAT:
                                 attr.SetValue(entity, reader.GetFloat(i));
                                 break;
 
-                            case "System.Boolean":
+                            case DataTypes._BOOL:
                                 attr.SetValue(entity, reader.GetBoolean(i));
                                 break;
 
-                            case "System.Guid":
+                            case DataTypes._GUID:
                                 attr.SetValue(entity, reader.GetGuid(i));
+                                break;
+                            default:
                                 break;
                         }
                     }
@@ -1198,10 +1203,11 @@ namespace DataMapper
         {
             SqlParameter[] parameters = new SqlParameter[sqlParamsCollection.Count];
 
-            for (int i = 0; i < sqlParamsCollection.Count; i++)
+            int count = sqlParamsCollection.Count;
+
+            for (int i = 0; i < count; i++)
             {
-                SqlParameter p = sqlParamsCollection[i];
-                parameters[i] = p;
+                parameters[i] = sqlParamsCollection[i];
             }
 
             return parameters;
