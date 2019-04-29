@@ -174,14 +174,14 @@ namespace DataMapper
                     {
                         try
                         {
-                            con.Open();
+                           
                             _primaryKeys = new Dictionary<string, bool>();
                             _calculatedKeys = new Dictionary<string, bool>();
                             using (SqlCommand command = new SqlCommand("dbo.pa_Verificacion_Campos_Especiales", con))
                             {
                                 command.CommandType = System.Data.CommandType.StoredProcedure;
-
                                 command.Parameters.AddWithValue("@Table_Name", _nombretabla);
+                                con.Open();
                                 SqlDataReader propiedadesReader = command.ExecuteReader();
                                 if (propiedadesReader.HasRows)
                                 {
@@ -224,7 +224,7 @@ namespace DataMapper
                                 }
                             }
                             if (_identityColumn == null) { _identityColumn = string.Empty; }
-                            con.Close();
+                            
                         }
                         catch (Exception ex)
                         {
