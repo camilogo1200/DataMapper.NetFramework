@@ -9,9 +9,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Principal;
 using System.Text;
 
@@ -174,7 +176,7 @@ namespace DataMapper
                     {
                         try
                         {
-                           
+
                             _primaryKeys = new Dictionary<string, bool>();
                             _calculatedKeys = new Dictionary<string, bool>();
                             using (SqlCommand command = new SqlCommand("dbo.pa_Verificacion_Campos_Especiales", con))
@@ -218,13 +220,13 @@ namespace DataMapper
                                         }
                                         catch (Exception ex)
                                         {
-                                            throw new Exception("NOMBRE_CAMPO Y/O PROPIEDAD no definidas como columnas en el retorno del SP pa_Verificacion_Campos_Especiales. [" + con.Database + "] ", ex);
+                                            throw new Exception("[DataMapper] - NOMBRE_CAMPO Y/O PROPIEDAD no definidas como columnas en el retorno del SP pa_Verificacion_Campos_Especiales. [" + con.Database + "] ", ex);
                                         }
                                     }
                                 }
                             }
                             if (_identityColumn == null) { _identityColumn = string.Empty; }
-                            
+
                         }
                         catch (Exception ex)
                         {
@@ -318,7 +320,7 @@ namespace DataMapper
         {
             if (entity == null)
             {
-                throw new ArgumentNullException(entity.GetType().ToString());
+                throw new ArgumentNullException("[DataMapper] - " + entity.GetType().ToString());
             }
 
             using (SqlConnection connection = new SqlConnection(ConnectionString))
@@ -349,14 +351,14 @@ namespace DataMapper
         {
             if (entity == null)
             {
-                throw new ArgumentNullException(entity.GetType().ToString());
+                throw new ArgumentNullException("[DataMapper] - " + entity.GetType().ToString());
             }
             var properties = typeof(TEntity).GetProperties().ToList();
             string pkey = GetPrimarykeys();
 
             if (string.IsNullOrEmpty(pkey))
             {
-                throw new ArgumentNullException(pkey);
+                throw new ArgumentNullException("[DataMapper] -" + pkey);
             }
 
             PropertyInfo prop = PropertyFromCustomAttribute(pkey);
@@ -492,7 +494,7 @@ namespace DataMapper
 
             if (string.IsNullOrEmpty(pkey))
             {
-                throw new ArgumentNullException(pkey);
+                throw new ArgumentNullException("[DataMapper] -" + pkey);
             }
 
             properties = properties.Where(p => p.GetValue(entity) != null).ToList();
@@ -696,8 +698,8 @@ namespace DataMapper
                         //Micro Optimization in foreach
                         int qtyParameters = cmd.Parameters.Count;
                         int qtyParameters2 = sqlParams.Count();
-                        string st1 = null;
-                        string st2 = null;
+                        string st1;
+                        string st2;
                         for (int i = 0; i < qtyParameters; i++)
                         {
                             parameter = cmd.Parameters[i];
@@ -706,7 +708,8 @@ namespace DataMapper
 
                             for (int j = 0; j < qtyParameters2; j++)
                             {
-                                parameter2 = sqlParams[i];
+
+                                parameter2 = sqlParams[j];
 
                                 //micro opt
                                 st1 = parameter.ParameterName.Replace(_atSign, string.Empty);
@@ -757,13 +760,14 @@ namespace DataMapper
                 }
                 if (_isAuditEnable)
                 {
-                    EndAuditing(ExecutionId, returnObject, _sqlConsoleMessage, true);
+                    EndAuditing(ExecutionId, ref returnObject, _sqlConsoleMessage, true);
                 }
             }
             catch (Exception Ex)
             {
-                EndAuditing(ExecutionId, Ex.Message + " [" + conection.Database + "] ", _sqlConsoleMessage, false);
-                throw new Exception(Ex.Message + " [" + conection.Database + "] ");
+                object o = Ex.Message + " [" + conection.Database + "] ";
+                EndAuditing(ExecutionId, ref o, _sqlConsoleMessage, false);
+                throw new Exception("[DataMapper] -" + Ex.Message + " [" + conection.Database + "] ");
             }
 
             return returnObject;
@@ -793,14 +797,24 @@ namespace DataMapper
             return lEntities;
         }
 
-        private void EndAuditing(long executionId, object returnObject, string sqlConsoleMessage, bool isSuccessful)
+        private void EndAuditing(long executionId, ref object returnObject, string sqlConsoleMessage, bool isSuccessful)
         {
-            string jsonParameters = null;
-            //jsonParameters = JsonConvert.SerializeObject(returnObject);
+            object result = default(object);
+            //using (var memoryStream = new MemoryStream())
+            //{
+            //    var formatter = new BinaryFormatter();
+            //    formatter.Serialize(memoryStream, returnObject);
+            //    memoryStream.Seek(0, SeekOrigin.Begin);
+            //    result = formatter.Deserialize(memoryStream);
+            //}
 
-            if (jsonParameters == null)
+            //result = (SqlDataReader)returnObject;
+
+            var jsonReturn = JsonConvert.SerializeObject(result);
+
+            if (jsonReturn == null)
             {
-                jsonParameters = "No existe retorno en ejecucion del procedimiento. (NULL)";
+                jsonReturn = null;
             }
 
             using (SqlConnection connection = new SqlConnection(GetAuditConnectionString()))
@@ -813,7 +827,7 @@ namespace DataMapper
                 })
                 {
                     command.Parameters.AddWithValue("@ExecutionId", executionId);
-                    command.Parameters.AddWithValue("@ReturnObject", jsonParameters);
+                    command.Parameters.AddWithValue("@ReturnObject", jsonReturn);
                     command.Parameters.AddWithValue("@SqlConsoleMessages", sqlConsoleMessage);
                     command.Parameters.AddWithValue("@ExecutionEndTime", DateTime.Now);
                     command.Parameters.AddWithValue("@IsSuccessful", isSuccessful);
@@ -833,7 +847,7 @@ namespace DataMapper
 
             if (string.IsNullOrEmpty(connectionString))
             {
-                throw new ArgumentNullException("Connection string Auditoria no encontrada Key (ConnectionString.Auditoria) No encontrada.");
+                throw new ArgumentNullException(" [DataMapper] - Connection string Auditoria no encontrada Key (ConnectionString.Auditoria) No encontrada.");
             }
             return connectionString;
         }
@@ -842,7 +856,7 @@ namespace DataMapper
         {
             if (_primaryKeys.Count == 0)
             {
-                throw new Exception("La Tabla { " + _nombretabla + " } no contiene llaves primarias.");
+                throw new Exception("[DataMapper] - La Tabla { " + _nombretabla + " } no contiene llaves primarias.");
             }
             return _primaryKeys.Keys.ElementAt(0);
         }
@@ -1034,7 +1048,7 @@ namespace DataMapper
             string projectStage = ConfigurationManager.AppSettings["PROJECT_STAGE"];
             if (string.IsNullOrEmpty(projectStage))
             {
-                throw new Exception("App Settings Key = [PROJECT_STAGE], No encontrada en web.config.");
+                throw new Exception(" [DataMapper] - App Settings Key = [PROJECT_STAGE], No encontrada en web.config.");
             }
             string connectionString = null;
             switch (projectStage.ToUpper())
@@ -1056,7 +1070,7 @@ namespace DataMapper
             }
             if (connectionString == null)
             {
-                throw new ArgumentNullException("Connection string no encontrada (PROJECT_STAGE) No encontrado" + projectStage);
+                throw new ArgumentNullException("[DataMapper] - Connection string no encontrada (PROJECT_STAGE) No encontrado" + projectStage);
             }
             return connectionString;
         }
