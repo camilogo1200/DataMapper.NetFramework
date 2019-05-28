@@ -883,22 +883,25 @@ namespace DataMapper
                 })
                 {
                     List<Parameter> lParameters = new List<Parameter>();
-                    int qty = sqlParams.Count();
-                    if (sqlParams != null && qty > 0)
+                    if (sqlParams != null)
                     {
-                        SqlParameter param = null;
-                        for (int i = 0; i < qty; i++)
+                        int qty = sqlParams.Count();
+                        if (qty > 0)
                         {
-                            param = sqlParams[i];
-
-                            Parameter p = new Parameter
+                            SqlParameter param = null;
+                            for (int i = 0; i < qty; i++)
                             {
-                                Name = param.ParameterName,
-                                Type = param.DbType.ToString(),
-                                Value = param.Value?.ToString()
-                            };
+                                param = sqlParams[i];
 
-                            lParameters.Add(p);
+                                Parameter p = new Parameter
+                                {
+                                    Name = param.ParameterName,
+                                    Type = param.DbType.ToString(),
+                                    Value = param.Value?.ToString()
+                                };
+
+                                lParameters.Add(p);
+                            }
                         }
                     }
                     string userID = WindowsIdentity.GetCurrent().Name;
@@ -907,7 +910,7 @@ namespace DataMapper
                     string dbName = conection.Database;
                     string workstationId = conection.WorkstationId;
                     string datasource = conection.DataSource;
-                    if (lParameters != null && lParameters.Count() > 0)
+                    if (lParameters?.Count > 0)
                     {
                         jsonParameters = JsonConvert.SerializeObject(lParameters);
                     }
